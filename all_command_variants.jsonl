@@ -1,0 +1,141 @@
+{"input": "go to the bed then find the waving person and tell something about yourself", "goals": ["go(bed)", "find(person, gesture='waving person')", "talk('something about yourself')"]}
+{"input": "go to the bed then find the waving person and follow them", "goals": ["go(bed)", "find(person, gesture='waving person')", "follow(person)"]}
+{"input": "go to the bed then find the waving person and follow them to the bed", "goals": ["go(bed)", "find(person, gesture='waving person')", "follow(person, to=bed)"]}
+{"input": "go to the bed then find the waving person and guide them to the bed", "goals": ["go(bed)", "find(person, gesture='waving person')", "guide(person, to=bed)"]}
+{"input": "go to the bed then meet Adel and tell something about yourself", "goals": ["go(bed)", "find(Adel)", "talk('something about yourself')"]}
+{"input": "go to the bed then meet Adel and follow them", "goals": ["go(bed)", "find(Adel)", "follow(Adel)"]}
+{"input": "go to the bed then meet Adel and follow them to the bed", "goals": ["go(bed)", "find(Adel)", "follow(Adel, to=bed)"]}
+{"input": "go to the bed then meet Adel and guide them to the bed", "goals": ["go(bed)", "find(Adel)", "guide(Adel, to=bed)"]}
+{"input": "go to the bed then find a juice pack and take it and throw it in the trash", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "drop(juice pack, in=trash)"]}
+{"input": "go to the bed then find a juice pack and take it and put it on the bed", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=bed)"]}
+{"input": "go to the bed then find a juice pack and take it and bring it to me", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "deliver(juice pack, to=me)"]}
+{"input": "go to the bed then find a juice pack and take it and bring it to the waving person in the bedroom", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(person, gesture='waving person')", "deliver(juice pack, person)"]}
+{"input": "go to the bed then find a juice pack and take it and bring it to Adel in the bedroom", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(Adel)", "deliver(juice pack, Adel)"]}
+{"input": "go to the bed then find the waving person and tell something about yourself", "goals": ["go(bed)", "find(person, gesture='waving person')", "talk('something about yourself')"]}
+{"input": "go to the bed then find the waving person and follow them", "goals": ["go(bed)", "find(person, gesture='waving person')", "follow(person)"]}
+{"input": "go to the bed then find the waving person and follow them to the bed", "goals": ["go(bed)", "find(person, gesture='waving person')", "follow(person, to=bed)"]}
+{"input": "go to the bed then find the waving person and guide them to the bed", "goals": ["go(bed)", "find(person, gesture='waving person')", "guide(person, to=bed)"]}
+{"input": "go to the bed then meet Adel and tell something about yourself", "goals": ["go(bed)", "find(Adel)", "talk('something about yourself')"]}
+{"input": "go to the bed then meet Adel and follow them", "goals": ["go(bed)", "find(Adel)", "follow(Adel)"]}
+{"input": "go to the bed then meet Adel and follow them to the bed", "goals": ["go(bed)", "find(Adel)", "follow(Adel, to=bed)"]}
+{"input": "go to the bed then meet Adel and guide them to the bed", "goals": ["go(bed)", "find(Adel)", "guide(Adel, to=bed)"]}
+{"input": "go to the bed then find a juice pack and take it and throw it in the trash", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "drop(juice pack, in=trash)"]}
+{"input": "go to the bed then find a juice pack and take it and put it on the bed", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=bed)"]}
+{"input": "go to the bed then find a juice pack and take it and bring it to me", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "deliver(juice pack, to=me)"]}
+{"input": "go to the bed then find a juice pack and take it and bring it to the waving person in the bedroom", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(person, gesture='waving person')", "deliver(juice pack, person)"]}
+{"input": "go to the bed then find a juice pack and take it and bring it to Adel in the bedroom", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(Adel)", "deliver(juice pack, Adel)"]}
+{"input": "take a juice pack from the bed and ", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)"]}
+{"input": "take a juice pack from the bed and throw it in the trash", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "drop(juice pack, in=trash)"]}
+{"input": "take a juice pack from the bed and put it on the bed", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=bed)"]}
+{"input": "take a juice pack from the bed and bring it to me", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "deliver(juice pack, to=me)"]}
+{"input": "take a juice pack from the bed and bring it to the waving person in the bedroom", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(person, gesture='waving person')", "deliver(juice pack, person)"]}
+{"input": "take a juice pack from the bed and bring it to Adel in the bedroom", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(Adel)", "deliver(juice pack, Adel)"]}
+{"input": "take a juice pack from the bed and throw it in the trash", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "drop(juice pack, in=trash)"]}
+{"input": "take a juice pack from the bed and put it on the bed", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=bed)"]}
+{"input": "take a juice pack from the bed and bring it to me", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "deliver(juice pack, to=me)"]}
+{"input": "take a juice pack from the bed and bring it to the waving person in the bedroom", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(person, gesture='waving person')", "deliver(juice pack, person)"]}
+{"input": "take a juice pack from the bed and bring it to Adel in the bedroom", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(Adel)", "deliver(juice pack, Adel)"]}
+{"input": "find a waving person in the bedroom and tell something about yourself", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "talk('something about yourself')"]}
+{"input": "find a waving person in the bedroom and follow them", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "follow(person)"]}
+{"input": "find a waving person in the bedroom and follow them to the bed", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "follow(person, to=bed)"]}
+{"input": "find a waving person in the bedroom and guide them to the bed", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "guide(person, to=bed)"]}
+{"input": "find a waving person in the bedroom and ", "goals": ["go(bedroom)", "find(person, gesture='waving person')"]}
+{"input": "find a waving person in the bedroom and tell something about yourself", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "talk('something about yourself')"]}
+{"input": "find a waving person in the bedroom and follow them", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "follow(person)"]}
+{"input": "find a waving person in the bedroom and follow them to the bed", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "follow(person, to=bed)"]}
+{"input": "find a waving person in the bedroom and guide them to the bed", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "guide(person, to=bed)"]}
+{"input": "find a juice pack in the bedroom then ", "goals": ["go(bedroom)", "find(juice pack)"]}
+{"input": "find a juice pack in the bedroom then take it and throw it in the trash", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "drop(juice pack, in=trash)"]}
+{"input": "find a juice pack in the bedroom then take it and put it on the bed", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=bed)"]}
+{"input": "find a juice pack in the bedroom then take it and bring it to me", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "deliver(juice pack, to=me)"]}
+{"input": "find a juice pack in the bedroom then take it and bring it to the waving person in the bedroom", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(person, gesture='waving person')", "deliver(juice pack, person)"]}
+{"input": "find a juice pack in the bedroom then take it and bring it to Adel in the bedroom", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(Adel)", "deliver(juice pack, Adel)"]}
+{"input": "find a juice pack in the bedroom then take it and throw it in the trash", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "drop(juice pack, in=trash)"]}
+{"input": "find a juice pack in the bedroom then take it and put it on the bed", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=bed)"]}
+{"input": "find a juice pack in the bedroom then take it and bring it to me", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "deliver(juice pack, to=me)"]}
+{"input": "find a juice pack in the bedroom then take it and bring it to the waving person in the bedroom", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(person, gesture='waving person')", "deliver(juice pack, person)"]}
+{"input": "find a juice pack in the bedroom then take it and bring it to Adel in the bedroom", "goals": ["go(bedroom)", "find(juice pack)", "take(juice pack)", "go(bedroom)", "find(Adel)", "deliver(juice pack, Adel)"]}
+{"input": "meet Adel in the bedroom and tell something about yourself", "goals": ["go(bedroom)", "find(Adel)", "talk('something about yourself')"]}
+{"input": "meet Adel in the bedroom and follow them", "goals": ["go(bedroom)", "find(Adel)", "follow(Adel)"]}
+{"input": "meet Adel in the bedroom and follow them to the bed", "goals": ["go(bedroom)", "find(Adel)", "follow(Adel, to=bed)"]}
+{"input": "meet Adel in the bedroom and guide them to the bed", "goals": ["go(bedroom)", "find(Adel)", "guide(Adel, to=bed)"]}
+{"input": "meet Adel in the bedroom and ", "goals": ["go(bedroom)", "find(Adel)"]}
+{"input": "meet Adel in the bedroom and tell something about yourself", "goals": ["go(bedroom)", "find(Adel)", "talk('something about yourself')"]}
+{"input": "meet Adel in the bedroom and follow them", "goals": ["go(bedroom)", "find(Adel)", "follow(Adel)"]}
+{"input": "meet Adel in the bedroom and follow them to the bed", "goals": ["go(bedroom)", "find(Adel)", "follow(Adel, to=bed)"]}
+{"input": "meet Adel in the bedroom and guide them to the bed", "goals": ["go(bedroom)", "find(Adel)", "guide(Adel, to=bed)"]}
+{"input": "tell me how many drinks there are on the bed", "goals": ["go(bed)", "count(drinks)"]}
+{"input": "tell me how many drinks there are on the bed", "goals": ["go(bed)", "count(drinks)"]}
+{"input": "tell me how many drinks there are on the bed", "goals": ["go(bed)", "count(drinks)"]}
+{"input": "tell me how many waving persons are in the bedroom", "goals": ["go(bedroom)", "count(person, gesture='waving persons')"]}
+{"input": "tell me how many waving persons are in the bedroom", "goals": ["go(bedroom)", "count(person, gesture='waving persons')"]}
+{"input": "tell me how many waving persons are in the bedroom", "goals": ["go(bedroom)", "count(person, gesture='waving persons')"]}
+{"input": "tell me the name of the person in the bedroom", "goals": ["go(bedroom)", "find(person)", "tell(name)"]}
+{"input": "tell me the name of the person in the bedroom", "goals": ["go(bedroom)", "find(person)", "tell(name)"]}
+{"input": "tell me the name of the person in the bedroom", "goals": ["go(bedroom)", "find(person)", "tell(name)"]}
+{"input": "tell me what is the biggest object on the bed", "goals": ["go(bed)", "find(object,property=biggest)", "tell(object,property=biggest)"]}
+{"input": "tell me what is the biggest object on the bed", "goals": ["go(bed)", "find(object,property=biggest)", "tell(object,property=biggest)"]}
+{"input": "tell me what is the biggest object on the bed", "goals": ["go(bed)", "find(object,property=biggest)", "tell(object,property=biggest)"]}
+{"input": "tell something about yourself to the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "talk('something about yourself')"]}
+{"input": "tell something about yourself to the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "talk('something about yourself')"]}
+{"input": "tell something about yourself to the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "talk('something about yourself')"]}
+{"input": "follow Adel from the bed to the bedroom", "goals": ["go(bed)", "find(Adel)", "follow(Adel, to=bedroom)"]}
+{"input": "follow Adel from the bed to the bedroom", "goals": ["go(bed)", "find(Adel)", "follow(Adel, to=bedroom)"]}
+{"input": "follow Adel from the bed to the bedroom", "goals": ["go(bed)", "find(Adel)", "follow(Adel, to=bedroom)"]}
+{"input": "guide Adel from the bed to the bed", "goals": ["go(bed)", "find(Adel)", "guide(Adel, to=bed)"]}
+{"input": "guide Adel from the bed to the bed", "goals": ["go(bed)", "find(Adel)", "guide(Adel, to=bed)"]}
+{"input": "guide Adel from the bed to the bed", "goals": ["go(bed)", "find(Adel)", "guide(Adel, to=bed)"]}
+{"input": "guide the waving person from the bed to the bed", "goals": ["go(bed)", "find(person, gesture='waving person')", "guide(person, to=bed)"]}
+{"input": "guide the waving person from the bed to the bed", "goals": ["go(bed)", "find(person, gesture='waving person')", "guide(person, to=bed)"]}
+{"input": "guide the waving person from the bed to the bed", "goals": ["go(bed)", "find(person, gesture='waving person')", "guide(person, to=bed)"]}
+{"input": "guide the person wearing a blue t shirt from the bed to the bed", "goals": ["go(bed)", "find(person, wearing='blue t shirt')", "guide(person, to=bed)"]}
+{"input": "guide the person wearing a blue t shirt from the bed to the bed", "goals": ["go(bed)", "find(person, wearing='blue t shirt')", "guide(person, to=bed)"]}
+{"input": "guide the person wearing a blue t shirt from the bed to the bed", "goals": ["go(bed)", "find(person, wearing='blue t shirt')", "guide(person, to=bed)"]}
+{"input": "bring me a juice pack from the bed", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "drop(juice pack, to=me)"]}
+{"input": "bring me a juice pack from the bed", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "drop(juice pack, to=me)"]}
+{"input": "bring me a juice pack from the bed", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "drop(juice pack, to=me)"]}
+{"input": "tell me what is the biggest drink on the bed", "goals": ["go(bed)", "find(drink,property=biggest)", "tell(drink,property=biggest)"]}
+{"input": "tell me what is the biggest drink on the bed", "goals": ["go(bed)", "find(drink,property=biggest)", "tell(drink,property=biggest)"]}
+{"input": "tell me what is the biggest drink on the bed", "goals": ["go(bed)", "find(drink,property=biggest)", "tell(drink,property=biggest)"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and tell something about yourself", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)", "talk('something about yourself')"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and follow them", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)", "follow(person)"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and follow them to the bed", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)", "follow(person, to=bed)"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and guide them to the bed", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)", "guide(person, to=bed)"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and ", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and tell something about yourself", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)", "talk('something about yourself')"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and follow them", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)", "follow(person)"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and follow them to the bed", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)", "follow(person, to=bed)"]}
+{"input": "greet the person wearing a blue t shirt in the bedroom and guide them to the bed", "goals": ["go(bedroom)", "find(person, wearing='blue t shirt')", "greet(person)", "guide(person, to=bed)"]}
+{"input": "greet Adel in the bedroom and tell something about yourself", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)", "talk('something about yourself')"]}
+{"input": "greet Adel in the bedroom and follow them", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)", "follow(Adel)"]}
+{"input": "greet Adel in the bedroom and follow them to the bed", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)", "follow(Adel, to=bed)"]}
+{"input": "greet Adel in the bedroom and guide them to the bed", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)", "guide(Adel, to=bed)"]}
+{"input": "greet Adel in the bedroom and ", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)"]}
+{"input": "greet Adel in the bedroom and tell something about yourself", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)", "talk('something about yourself')"]}
+{"input": "greet Adel in the bedroom and follow them", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)", "follow(Adel)"]}
+{"input": "greet Adel in the bedroom and follow them to the bed", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)", "follow(Adel, to=bed)"]}
+{"input": "greet Adel in the bedroom and guide them to the bed", "goals": ["go(bedroom)", "find(Adel)", "greet(Adel)", "guide(Adel, to=bed)"]}
+{"input": "meet Adel at the bed then find them in the bedroom", "goals": ["go(bed)", "find(Adel)", "go(bedroom)", "find(Adel)"]}
+{"input": "meet Adel at the bed then find them in the bedroom", "goals": ["go(bed)", "find(Adel)", "go(bedroom)", "find(Adel)"]}
+{"input": "meet Adel at the bed then find them in the bedroom", "goals": ["go(bed)", "find(Adel)", "go(bedroom)", "find(Adel)"]}
+{"input": "tell me how many people in the bedroom are wearing blue t shirts", "goals": ["go(bedroom)", "count(person, wearing='blue t shirts')"]}
+{"input": "tell me how many people in the bedroom are wearing blue t shirts", "goals": ["go(bedroom)", "count(person, wearing='blue t shirts')"]}
+{"input": "tell me how many people in the bedroom are wearing blue t shirts", "goals": ["go(bedroom)", "count(person, wearing='blue t shirts')"]}
+{"input": "tell the name of the person at the bed to the person at the shelf", "goals": ["go(bed)", "find(person)", "save(name)", "go(shelf)", "find(person)", "tell(name)"]}
+{"input": "tell the name of the person at the bed to the person at the shelf", "goals": ["go(bed)", "find(person)", "save(name)", "go(shelf)", "find(person)", "tell(name)"]}
+{"input": "tell the name of the person at the bed to the person at the shelf", "goals": ["go(bed)", "find(person)", "save(name)", "go(shelf)", "find(person)", "tell(name)"]}
+{"input": "follow the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "follow(person)"]}
+{"input": "follow the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "follow(person)"]}
+{"input": "follow the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "follow(person)"]}
+{"input": "go to the bed", "goals": ["go(bed)"]}
+{"input": "go to the bed", "goals": ["go(bed)"]}
+{"input": "go to the bed", "goals": ["go(bed)"]}
+{"input": "go to the bed and take a juice pack", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)"]}
+{"input": "go to the bed and take a juice pack", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)"]}
+{"input": "go to the bed and take a juice pack", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)"]}
+{"input": "answer the question of the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "answer_question()"]}
+{"input": "answer the question of the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "answer_question()"]}
+{"input": "answer the question of the waving person in the bedroom", "goals": ["go(bedroom)", "find(person, gesture='waving person')", "answer_question()"]}
+{"input": "bring a juice pack from the bed to the shelf", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=shelf)"]}
+{"input": "bring a juice pack from the bed to the shelf", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=shelf)"]}
+{"input": "bring a juice pack from the bed to the shelf", "goals": ["go(bed)", "find(juice pack)", "take(juice pack)", "place(juice pack, on=shelf)"]}

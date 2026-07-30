@@ -1,55 +1,66 @@
-# Prerequisites
-*.d
+# ==============================
+# Python
+# ==============================
+# Compiled Python files
+*.pyc
+*.pyo
+*.pyd
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+# Python cache directories
+__pycache__/
+**/__pycache__/
 
-# Linker output
-*.ilk
-*.map
-*.exp
+# Python virtual environments
+venv/
+env/
+.venv/
+.env/
 
-# Precompiled Headers
-*.gch
-*.pch
+# ==============================
+# ROS2 / CMake
+# ==============================
+# ROS2 build artifacts
+build/
+install/
+log/
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+# Some ROS2 specific generated files
+*.egg-info/
+*.egg
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+# ==============================
+# Editor / IDE
+# ==============================
+# VSCode
+.vscode/
+**/.vscode/
+.codex/
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+# JetBrains (PyCharm, etc.)
+.idea/
+**/.idea/
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+# ==============================
+# OS / Misc
+# ==============================
+# macOS
+.DS_Store
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# Linux / temp files
+*~
+*.swp
+*.swo
 
-# debug information files
-*.dwo
+# ==============================
+# Submodules
+# ==============================
+# Keep submodule commits tracked, ignore their build/ or generated content
+**/build/
+**/install/
+**/log/
+**/__pycache__/
+
+
+
+nl2cd_qwen7b/
+*.zip
