@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+"""Servidor HTTP para ejecutar Qwen fuera de la computadora de Justina.
+
+El proceso carga una sola vez el modelo base y el adaptador LoRA. Los clientes
+envían ``POST /translate`` y reciben el resultado validado que produce
+``inference.translate``. ``qwen_semantic_node.py`` ya implementa este contrato,
+por lo que la computadora ROS puede reservar memoria y GPU para navegación,
+visión y los demás procesos de Justina.
+
+``ThreadingHTTPServer`` mantiene responsivo ``/health``, pero ``QwenBackend``
+serializa las generaciones con un lock: dos inferencias simultáneas en una sola
+GPU suelen aumentar el uso de memoria y empeorar la latencia.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -16,13 +29,18 @@ import inference
 
 
 class QwenHTTPServer(ThreadingHTTPServer):
+    """Servidor cuyas conexiones no impiden cerrar limpiamente el proceso."""
+
     daemon_threads = True
 
 
 class QwenBackend:
+    """Mantiene tokenizer, modelo y normalizador residentes entre peticiones."""
+
     def __init__(
         self,
         *,
+        adapter_path: str,
         device_map: str,
         max_memory: str,
         cpu_offload: bool,
@@ -34,10 +52,11 @@ class QwenBackend:
             allow_tf32=allow_tf32,
         )
         print(f"Runtime: CPU threads={used_threads} | device_map={device_map}")
+        self.adapter_path = adapter_path
 
         print("Loading Qwen tokenizer...")
         with inference.ResourceTimer("server tokenizer load"):
-            self.tokenizer = inference.load_tokenizer()
+            self.tokenizer = inference.load_tokenizer(adapter_path)
 
         print("Loading Qwen base model and LoRA adapter...")
         with inference.ResourceTimer("server model load"):
@@ -46,6 +65,7 @@ class QwenBackend:
                 device_map=device_map,
                 max_memory=max_memory or None,
                 cpu_offload=cpu_offload,
+                adapter_path=adapter_path,
             )
 
         self.normalizer = inference.get_default_normalizer()
@@ -54,6 +74,7 @@ class QwenBackend:
         print("Qwen HTTP backend ready.")
 
     def translate(self, command: str) -> dict[str, Any]:
+        """Ejecuta una generación a la vez y devuelve el contrato de inference."""
         with self.lock:
             return inference.translate(
                 command,
@@ -65,6 +86,8 @@ class QwenBackend:
 
 
 class QwenRequestHandler(BaseHTTPRequestHandler):
+    """Implementa únicamente los endpoints ``/health`` y ``/translate``."""
+
     backend: QwenBackend
     api_key: str
     max_body_bytes: int
@@ -78,6 +101,7 @@ class QwenRequestHandler(BaseHTTPRequestHandler):
                 "ok": True,
                 "status": "ready",
                 "model_loaded": True,
+                "adapter_path": self.backend.adapter_path,
                 "uptime_s": time.time() - self.backend.started_at,
             }
         )
@@ -122,12 +146,14 @@ class QwenRequestHandler(BaseHTTPRequestHandler):
             self._send_error(HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
 
     def _authorized(self) -> bool:
+        """Valida Bearer token en tiempo constante cuando se configuró uno."""
         if not self.api_key:
             return True
         header = self.headers.get("Authorization", "")
         return hmac.compare_digest(header, f"Bearer {self.api_key}")
 
     def _read_json(self) -> dict[str, Any]:
+        """Lee un objeto JSON sin permitir cuerpos de tamaño ilimitado."""
         length = int(self.headers.get("Content-Length", "0"))
         if length <= 0:
             raise ValueError("missing JSON body")
@@ -158,9 +184,11 @@ class QwenRequestHandler(BaseHTTPRequestHandler):
 
 
 def parse_args() -> argparse.Namespace:
+    """Define opciones de despliegue sin acoplarlas a una computadora concreta."""
     parser = argparse.ArgumentParser(description="Serve Qwen GPSR inference over HTTP.")
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8008)
+    parser.add_argument("--adapter-path", default=inference.ADAPTER_PATH)
     parser.add_argument("--device-map", default=inference.DEFAULT_DEVICE_MAP)
     parser.add_argument("--max-memory", default="")
     parser.add_argument("--cpu-offload", action="store_true")
@@ -172,8 +200,10 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Carga el backend una vez y atiende hasta recibir Ctrl+C/SIGINT."""
     args = parse_args()
     QwenRequestHandler.backend = QwenBackend(
+        adapter_path=args.adapter_path,
         device_map=args.device_map,
         max_memory=args.max_memory,
         cpu_offload=args.cpu_offload,

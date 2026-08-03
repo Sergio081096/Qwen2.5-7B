@@ -58,6 +58,10 @@ goals_to_clips_node.py → goals_planning.clp → plan de Justina
 - `dataset_evaluation.py`: calcula cobertura por familia, tipos y slots, y
   ejecuta las reglas CLIPS mediante `clipspy`.
 - `evaluate_dataset.py`: permite auditar un JSONL ya generado sin entrenar.
+- `evaluate_model.py`: ejecuta un benchmark fijo, mide exactitud semántica,
+  planificabilidad y latencia, y crea gráficas y un CSV por caso.
+- `model_evaluation_cases.jsonl`: benchmark curado que permite comparar
+  entrenamientos sin depender de una muestra aleatoria.
 - `test_dataset_quality.py`: contiene pruebas unitarias del contrato y de una
   generación acotada.
 
@@ -66,7 +70,9 @@ goals_to_clips_node.py → goals_planning.clp → plan de Justina
 - `Nl-Cl.py`: carga el JSONL, valida cada fila y entrena el adaptador QLoRA.
 - `inference.py`: carga el adaptador y rechaza predicciones que no cumplan el
   esquema canónico.
-- `server.py`: expone la inferencia mediante HTTP.
+- `server.py`: mantiene el modelo cargado y expone la inferencia mediante HTTP
+  para ejecutarla en otra computadora.
+- `test_server.py`: verifica `/health` y `/translate` sin depender de ROS.
 
 ## 2. Fuentes de conocimiento
 
@@ -123,7 +129,7 @@ Las constantes al inicio de `generate_dataset.py` controlan la ejecución:
 
 ```python
 DATA_DIR = "./CompetitionTemplate"
-NUM_SAMPLES = 20000
+NUM_SAMPLES = 40000
 PERSON_RATIO = 0.5
 RANDOM_SEED = 42
 OUTPUT_FILE = "dataset_gpsr.jsonl"
@@ -134,7 +140,7 @@ CLIPS_VALIDATION_SAMPLES = 200
 
 - `NUM_SAMPLES`: cardinalidad final exacta solicitada.
 - `PERSON_RATIO`: proporción reservada para familias de persona. Con `0.5` y
-  20,000 muestras se producen exactamente 10,000 de persona y 10,000 de objeto.
+  40,000 muestras se producen exactamente 20,000 de persona y 20,000 de objeto.
 - `RANDOM_SEED`: permite repetir la misma generación.
 - `DEDUPLICATE`: evita inputs exactos repetidos.
 - `MAX_ATTEMPTS_PER_SAMPLE`: controla cuándo una familia se considera saturada.
@@ -274,6 +280,33 @@ paráfrasis de una familia conserven los mismos slots de contenido.
 
 ## 6. Construcción de una muestra
 
+`generate_dataset.py` separa deliberadamente la coordinación de la generación
+lingüística. Su flujo principal es:
+
+```text
+main
+ ├─ parse_data                         carga CompetitionTemplate
+ ├─ validate_catalogs                  compara y valida entidades
+ ├─ generate_balanced_dataset
+ │   ├─ discover_family_signatures     enumera firmas realmente alcanzables
+ │   ├─ distribute_evenly              reparte cuotas sin sesgo por redondeo
+ │   ├─ _try_add_unique_sample
+ │   │   └─ CommandGenerator.generate_command_start
+ │   │       ├─ _resolve_followups_with_context
+ │   │       ├─ insert_all_placeholders_with_context
+ │   │       └─ _generate_goals
+ │   ├─ _enrich_sample                 añade metadatos de auditoría
+ │   └─ fase de redistribución         rellena estratos saturados
+ ├─ evaluate_dataset_rows              esquema, cobertura, slots y CLIPS
+ └─ escritura JSONL                    persistencia final tras validar
+```
+
+La separación tiene dos ventajas prácticas:
+
+- `command_constants.py` controla cómo puede sonar una intención;
+- `command_goals.py` controla qué significa, independientemente de la variante
+  superficial que se haya elegido.
+
 Para cada estrato `(category, family, goal_signature)`, el generador:
 
 1. fuerza temporalmente la selección de la familia solicitada;
@@ -311,6 +344,26 @@ incluye en la respuesta aprendida; el target del modelo sigue siendo solamente:
 ```json
 {"goals": ["..."]}
 ```
+
+### Cómo añadir o modificar comandos
+
+Para añadir solamente otra forma de decir una intención existente, se agrega
+una plantilla a `TEMPLATE_VARIANTS` y se conserva el mismo conjunto de
+placeholders semánticos. No se debe tocar `command_goals.py`.
+
+Para crear una familia con semántica nueva se requiere:
+
+1. declarar sus variantes superficiales en `command_constants.py`;
+2. añadirla a `PERSON_CMD_LIST` u `OBJECT_CMD_LIST`;
+3. implementar el método homónimo en `CommandGoalsMixin`;
+4. registrarlo en `CommandGenerator.goal_generators`;
+5. verificar su firma y dependencias con `goal_schema.py`;
+6. añadir un caso estable a `model_evaluation_cases.jsonl`;
+7. comprobar que la secuencia resulte planificable en `goals_planning.clp`.
+
+El nombre de la familia conecta la plantilla con el método del parser. Un typo
+o una familia registrada sin método debe fallar durante la validación, no
+producir una etiqueta parcial.
 
 ## 7. Deduplicación, balanceo y reintentos
 
@@ -378,8 +431,8 @@ que una secuencia haya fallado si el reporte indica `clips_planifiable` y
 Desde este directorio:
 
 ```bash
-cd /home/sergio/Qwen2.5-7B
-export JUSTINA_WS=/home/sergio/Justina
+cd /home/$USER/Qwen2.5-7B
+export JUSTINA_WS=/home/$USER/Justina
 python generate_dataset.py
 ```
 
@@ -392,12 +445,7 @@ La secuencia es:
 5. imprimir estadísticas;
 6. escribir `dataset_gpsr.jsonl`.
 
-El archivo se escribe solamente después de superar las validaciones. Aun así,
-si se desea conservar el dataset anterior, debe respaldarse antes:
-
-```bash
-cp dataset_gpsr.jsonl dataset_gpsr_legacy.jsonl
-```
+El archivo se escribe solamente después de superar las validaciones.
 
 ## 10. Auditar un dataset sin entrenar
 
@@ -450,8 +498,21 @@ casos permanecen fijos y permiten comparar dos checkpoints justamente.
 Evaluar el adaptador final y mostrar solamente errores:
 
 ```bash
-python evaluate_model.py
+python evaluate_model.py --output-json evaluation_final.json
 ```
+
+La misma ejecución crea por defecto el directorio `evaluation_plots/`:
+
+| Archivo | Contenido |
+|---|---|
+| `metrics_overview.png` | exact match, esquema, slots, CLIPS y accuracy de `kind` |
+| `family_accuracy.png` | exact match estricto y canónico para cada familia |
+| `outcomes_and_latency.png` | aciertos, diferencias solo de mayúsculas, errores y latencias |
+| `case_results.csv` | entrada, salida esperada/predicha, familia, tiempos y estado por caso |
+
+Las gráficas usan los resultados que ya están en memoria; no ejecutan el modelo
+una segunda vez. Para cambiar el destino se usa `--plots-dir directorio`. Si se
+necesita una evaluación sin archivos gráficos, se pasa `--no-plots`.
 
 Mostrar todos los casos, incluidos los correctos:
 
@@ -490,15 +551,17 @@ python evaluate_model.py --require-perfect --strict-case
 Esto permite usar el benchmark como prueba de regresión sin penalizar la
 normalización esperada de entidades.
 
+La comparación sin mayúsculas no oculta errores de tipo: `find(Water,
+kind=object)` y `find(water, kind=person)` continúan siendo diferentes. Solo
+acepta que el normalizador convierta la superficie a minúsculas mientras
+mantiene exactamente la estructura, el orden, los valores y los slots.
+
 ## 12. Preparación para entrenar con `Nl-Cl.py`
 
 ### Estado del dataset actual
 
-El `dataset_gpsr.jsonl` usado por el entrenamiento anterior ya contiene el
-contrato `kind`, pero no incluye las nuevas superficies ni las familias
-`go -> find`. Antes del siguiente entrenamiento debe regenerarse con el código
-actual. La verificación de 20,000 muestras se hizo en memoria y no sobrescribió
-el JSONL existente.
+El `dataset_gpsr.jsonl` incluye las nuevas superficies y familias. Para el
+entrenamiento debe generarse con el código actual.
 
 ### Checklist obligatorio
 
@@ -507,13 +570,13 @@ el JSONL existente.
 3. Confirmar que el reporte indique cero etiquetas inválidas.
 4. Confirmar que las muestras CLIPS sean planificables.
 5. Ejecutar opcionalmente `evaluate_dataset.py` sobre el archivo final.
-6. Confirmar que el adaptador anterior esté respaldado en `Robocup2026.zip`.
+6. Confirmar que el adaptador `nl2cd_qwen7b` anterior esté respaldado.
 7. Iniciar `python Nl-Cl.py` usando nuevamente `nl2cd_qwen7b`.
 
-### Reutilizar `nl2cd_qwen7b`
+### Usando `nl2cd_qwen7b`
 
-El adaptador anterior ya está respaldado dentro de `Robocup2026.zip`, por lo
-que el nuevo entrenamiento puede volver a escribir en la carpeta habitual:
+El entrenamiento anterior está respaldado en un archivo ZIP separado, por lo
+que la carpeta habitual puede usarse directamente para el adaptador vigente:
 
 ```python
 OUTPUT_DIR = "nl2cd_qwen7b"
@@ -549,6 +612,49 @@ El script:
    guarda ese adaptador junto con el tokenizer;
 7. ejecuta exact match y las métricas semánticas nuevas.
 
+### Qué aprende realmente `Nl-Cl.py`
+
+Cada fila se convierte a una conversación usando el chat template oficial del
+tokenizer de Qwen:
+
+```text
+user:      go to the kitchen and find Robin
+assistant: {"goals":["go(kitchen)","find(Robin, kind=person)"]}
+```
+
+El comando sí entra al modelo como contexto, pero sus posiciones en `labels`
+se reemplazan por `-100`. PyTorch ignora esas posiciones en la pérdida. De este
+modo el modelo aprende a generar la respuesta del asistente y no a repetir el
+prompt. `CompletionOnlyCollator` agrega padding dinámico por lote y también usa
+`-100` para que el padding no afecte la pérdida.
+
+El modelo base se carga en 4 bits con NF4 y double quantization. QLoRA mantiene
+congelados los pesos base e inserta matrices entrenables en:
+
+```text
+q_proj, k_proj, v_proj, o_proj,
+gate_proj, up_proj, down_proj
+```
+
+Los parámetros principales del experimento actual son:
+
+| Parámetro | Valor | Efecto |
+|---|---:|---|
+| `MAX_LENGTH` | 512 | máximo combinado de prompt y respuesta |
+| batch por GPU | 1 | principal consumo instantáneo de memoria |
+| acumulación | 8 | batch efectivo de 8 muestras |
+| épocas | 2 | dos recorridos por las 36,000 filas de train |
+| learning rate | `1e-4` | paso inicial de los adaptadores LoRA |
+| LoRA `r / alpha / dropout` | `32 / 64 / 0.05` | capacidad y regularización |
+| `eval_steps` | 250 | frecuencia de evaluación |
+| `save_steps` | 500 | frecuencia de checkpoints |
+| scheduler | cosine, warmup 150 | descenso gradual del learning rate |
+
+Con 36,000 muestras de train, batch efectivo 8 y dos épocas se obtienen 9,000
+pasos de optimización. Si se cambia el tamaño del dataset o la acumulación,
+también cambian los pasos totales y la proporción que representan 150 pasos de
+warmup.
+
 La selección automática se configura con:
 
 ```python
@@ -561,23 +667,26 @@ greater_is_better=False
 guardados coinciden periódicamente con pasos de evaluación. `save_total_limit`
 conserva el mejor checkpoint aunque no sea el último.
 
+`trainer.save_model()` guarda el adaptador LoRA elegido y no duplica todos los
+pesos del Qwen base. El tokenizer sí se guarda en `nl2cd_qwen7b` para que
+entrenamiento, inferencia y servidor usen el mismo vocabulario y chat template.
+
 ## 13. Pruebas automatizadas
 
-Las pruebas del generador y el contrato se ejecutan con:
+Las pruebas del generador, el contrato y los artefactos gráficos se ejecutan
+con:
 
 ```bash
-python -m unittest -v test_dataset_quality.py
+python -m unittest -v test_dataset_quality.py test_evaluate_model.py
 ```
 
 Cubren:
 
 - obligatoriedad de `kind`;
-- distinción de `Water` como objeto;
 - cardinalidad y deduplicación;
 - proporción exacta de categorías;
 - metadatos;
 - tres superficies por familia y equivalencia de sus slots semánticos;
-- cobertura de `go -> find` y `go -> find -> greet`;
 - balance por firma dentro de cada familia;
 - rechazo de origen/destino o navegación redundantes;
 - correcciones de `tellPrsInfoInLoc` y `bringObjFromTo`;
@@ -585,15 +694,141 @@ Cubren:
 - advertencias de catálogo;
 - una secuencia representativa de cada familia en CLIPS.
 
-## 14. Trabajo pospuesto
+## 14. Inferencia remota con `server.py`
 
-Ya se incorporaron tres estructuras por familia y la separación entre
-superficie y semántica. Queda pospuesto:
+Cuando la computadora de Justina ya ejecuta visión, navegación, audio, CLIPS y
+otros nodos ROS2, cargar además Qwen2.5-7B puede provocar presión de RAM/VRAM o
+latencias inestables. `server.py` permite mantener el modelo en una computadora
+con GPU y dejar en Justina únicamente el cliente HTTP.
 
-- crear splits que dejen estructuras completas fuera del entrenamiento;
-- añadir paráfrasis adicionales hasta un máximo de cinco por familia cuando
-  las evaluaciones indiquen una carencia concreta;
-- añadir ruido ASR controlado.
+```text
+Computadora de Justina                         Computadora con GPU
+──────────────────────                         ──────────────────
+qwen_semantic_node.py
+        │ POST /translate {command}
+        ├─────────────────────────────────────> server.py
+        │                                       ├─ normalización
+        │                                       ├─ Qwen base + LoRA
+        │                                       └─ validación de goals
+        │ {normalized_input, prediction.goals}
+        <──────────────────────────────────────┤
+qwen_goal_adapter / goals_to_clips / CLIPS
+```
 
-Estas mejoras deben construirse sobre el contrato `kind` actual para que más
-variedad lingüística no vuelva a introducir ambigüedad en las etiquetas.
+El modelo y el tokenizer se cargan una sola vez al iniciar el servidor. Aunque
+el servidor acepta conexiones en varios hilos, un lock ejecuta una generación
+a la vez para evitar picos de VRAM en una única GPU.
+
+### Iniciar el servidor en la computadora con GPU
+
+```bash
+cd /home/$USER/Qwen2.5-7B
+export QWEN_API_KEY='cambie-esta-clave'
+python server.py \
+  --host 0.0.0.0 \
+  --port 8008 \
+  --adapter-path nl2cd_qwen7b \
+  --api-key "$QWEN_API_KEY"
+```
+
+Para restringir memoria o repartir capas también están disponibles
+`--device-map`, `--max-memory` y `--cpu-offload`. `python server.py --help`
+muestra todas las opciones.
+
+Comprobar el servidor desde la red antes de iniciar ROS:
+
+```bash
+curl http://IP_DE_LA_GPU:8008/health
+python test_server.py \
+  "go to the kitchen and find Robin" \
+  --url http://IP_DE_LA_GPU:8008 \
+  --api-key "$QWEN_API_KEY"
+```
+
+`GET /health` indica si el backend está listo, el adaptador cargado y el tiempo
+activo. `POST /translate` recibe:
+
+```json
+{"command": "go to the kitchen and find Robin"}
+```
+
+y responde con `ok`, `elapsed_ms`, `normalized_input` y la predicción validada.
+Los códigos más útiles son `400` para una petición inválida, `401` para una
+clave incorrecta, `422` para una salida del modelo no válida y `500` para un
+fallo interno.
+
+### Conectar `qwen_semantic_node.py` desde Justina
+
+El nodo de Justina ya usa este protocolo. Puede configurarse mediante los
+argumentos del launch:
+
+```bash
+ros2 launch semantic_parser semantic_parser.launch.xml \
+  qwen_url:=http://IP_DE_LA_GPU:8008 \
+  qwen_api_key:="$QWEN_API_KEY" \
+  qwen_timeout_sec:=30.0 \
+  qwen_response_format:=goals
+```
+
+En esa terminal, `QWEN_API_KEY` debe contener la misma clave configurada en la
+computadora con GPU.
+
+O mediante variables de entorno antes de iniciar el nodo:
+
+```bash
+export QWEN_SERVER_URL=http://IP_DE_LA_GPU:8008
+export QWEN_API_KEY='la-misma-clave-del-servidor'
+export QWEN_TIMEOUT_SEC=30
+export QWEN_RESPONSE_FORMAT=goals
+```
+
+Si servidor y ROS están en el mismo equipo, se recomienda `--host 127.0.0.1`.
+Si se usa `0.0.0.0`, debe configurarse clave, firewall y una red confiable. El
+servidor usa HTTP sin cifrado; no debe exponerse directamente a Internet sin
+VPN o un proxy con TLS.
+
+## 15. Resultados del entrenamiento actual de 40,000 muestras
+
+El adaptador vigente está en `nl2cd_qwen7b`. El experimento utilizó 36,000
+muestras para entrenamiento, 4,000 para validación, batch efectivo 8 y dos
+épocas.
+
+| Resultado de entrenamiento | Valor |
+|---|---:|
+| pasos de optimización | 9,000 |
+| tiempo total | 27,513.4 s (7 h 38 min 33 s) |
+| muestras por segundo | 2.617 |
+| `train_loss` promedio | 0.2464565 |
+| `eval_loss` final | 0.2338212 |
+| mejor `eval_loss` observado | 0.2337805 (paso 7,500) |
+
+La diferencia entre el mejor valor y el final es aproximadamente `0.000041`,
+por lo que la curva terminó esencialmente estable. Este entrenamiento terminó
+antes de activar `load_best_model_at_end`; los futuros entrenamientos con el
+código actual restaurarán automáticamente el checkpoint de menor `eval_loss`.
+
+![Curva de pérdida del entrenamiento de 40,000 muestras](loss_curve.png)
+
+El benchmark fijo de 48 comandos produjo:
+
+| Métrica | Resultado |
+|---|---:|
+| exact match estricto | 47/48 (97.92%) |
+| exact match canónico, sin distinguir mayúsculas | 48/48 (100%) |
+| F1 de slots estricto | 99.56% |
+| F1 de slots canónico | 100% |
+| `kind=object` | 17/17 (100%) |
+| `kind=person` | 33/33 (100%) |
+| esquema válido | 48/48 (100%) |
+| planificable en CLIPS | 48/48 (100%) |
+| tiempo total / rendimiento | 88.17 s / 0.544 comandos por segundo |
+
+La única diferencia estricta fue `Water` frente a `water`. Como el normalizador
+lleva la entrada a minúsculas y conservó correctamente `kind=object`, no es un
+error semántico. Por eso se mantienen ambas métricas: la estricta detecta deriva
+de superficie y la canónica representa mejor si Justina recibirá el mismo plan.
+
+El archivo `adapter_model.safetensors` ocupa aproximadamente 323 MB. La carpeta
+completa puede ser mayor mientras conserve checkpoints intermedios; para
+inferencia solo son necesarios el adaptador final, su configuración y los
+archivos del tokenizer presentes en la raíz de `nl2cd_qwen7b`.

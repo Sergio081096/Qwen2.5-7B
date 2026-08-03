@@ -27,6 +27,8 @@ DEFAULT_CLIPS_RULES = _JUSTINA_WS / (
 
 @dataclass(frozen=True)
 class ClipsValidationResult:
+    """Resultado independiente del binding de CLIPS y fácil de serializar."""
+
     planifiable: bool
     message_count: int = 0
     reason: str = ""
@@ -112,6 +114,7 @@ class ClipsPlanValidator:
             pass
 
     def validate(self, goals: Sequence[str]) -> ClipsValidationResult:
+        """Reinicia CLIPS, inserta una secuencia y exige su terminación completa."""
         if self._environment is None:
             return ClipsValidationResult(False, reason="CLIPS validator is closed")
         issues = validate_goals(goals)
@@ -231,7 +234,12 @@ def evaluate_predictions(
     clips_validator: ClipsPlanValidator | None = None,
     max_samples: int = 50,
 ) -> dict:
-    """Compara predicciones por familia, tipo, slots, esquema y CLIPS."""
+    """Compara predicciones por familia, tipo, slots, esquema y CLIPS.
+
+    Las métricas de slots usan una clave que incluye posición y nombre de la
+    acción; así un destino correcto colocado en el goal equivocado no cuenta
+    accidentalmente como acierto.
+    """
     totals = Counter()
     family_scores = defaultdict(Counter)
     kind_scores = defaultdict(Counter)

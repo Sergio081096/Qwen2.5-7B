@@ -1,10 +1,18 @@
-# command_goals.py
-# Mixin con generadores de metas para CommandGenerator.
-# Contrato canónico: find() y count() siempre declaran kind=person|object.
+"""Conversión del contexto renderizado al contrato canónico de goals.
+
+Este módulo no genera lenguaje natural. Cada método corresponde a una familia
+de ``TEMPLATE_VARIANTS`` y debe usar únicamente valores del contexto recibido.
+Así se pueden agregar paráfrasis sin duplicar ni alterar la semántica.
+
+Regla central: ``find`` y ``count`` siempre declaran ``kind=person|object``.
+"""
 
 import warnings
 
+
 class CommandGoalsMixin:
+    """Implementa una función semántica por familia y por follow-up."""
+
     def _singular_person_desc(self, desc):
         if not desc:
             return desc
@@ -19,6 +27,7 @@ class CommandGoalsMixin:
         return desc
 
     def _generate_goals(self, command_key, context):
+        """Despacha una familia al generador registrado en CommandGenerator."""
         if command_key in self.goal_generators:
             self._debug_print(f"Generating goals for {command_key} with context: {context}")
             return self.goal_generators[command_key](context)

@@ -1,10 +1,12 @@
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from command_constants import TEMPLATE_VARIANTS
 from evaluate_model import (
     DEFAULT_BENCHMARK,
     case_details,
+    create_evaluation_artifacts,
     evaluate_cached_predictions,
     load_benchmark,
 )
@@ -61,6 +63,33 @@ class ModelBenchmarkTests(unittest.TestCase):
 
     def test_default_benchmark_is_next_to_script(self):
         self.assertTrue(Path(DEFAULT_BENCHMARK).is_file())
+
+    def test_evaluation_artifacts_are_created_from_cached_results(self):
+        rows = self.rows[:3]
+        results = [
+            {
+                "normalized_input": row["input"],
+                "prediction": {"goals": list(row["goals"])},
+                "_elapsed_ms": 1000.0 + index * 100.0,
+            }
+            for index, row in enumerate(rows)
+        ]
+        report = evaluate_cached_predictions(rows, results)
+        details = case_details(rows, results)
+
+        with TemporaryDirectory() as tmpdir:
+            artifacts = create_evaluation_artifacts(report, details, tmpdir)
+            self.assertEqual(len(artifacts), 4)
+            self.assertTrue(all(path.is_file() for path in artifacts))
+            self.assertEqual(
+                {path.name for path in artifacts},
+                {
+                    "metrics_overview.png",
+                    "family_accuracy.png",
+                    "outcomes_and_latency.png",
+                    "case_results.csv",
+                },
+            )
 
 
 if __name__ == "__main__":

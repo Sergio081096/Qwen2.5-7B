@@ -1,28 +1,49 @@
-# gpsr_commands.py
-# Clase principal CommandGenerator – usa mixins importados
+"""Orquestador que mantiene alineados texto, contexto y goals GPSR.
+
+``CommandUtilsMixin`` se ocupa de renderizar la superficie y
+``CommandGoalsMixin`` transforma el contexto resultante en semántica. La clase
+de este archivo es el punto de unión: selecciona familia/variante, reintenta
+combinaciones redundantes y valida el plan antes de devolver una muestra.
+"""
 
 import random
 import warnings
-from functools import cached_property
 
 from goal_schema import validate_goals
 
 from command_constants import (
-    TEMPLATES, TEMPLATE_VARIANTS, DISTINCT_SLOT_GROUPS, validate_template_variants,
-    FOLLOWUP_TEMPLATES, FOLLOWUP_PEOPLE, FOLLOWUP_OBJECTS,
-    PERSON_CMD_LIST, OBJECT_CMD_LIST,
-    VERB_DICT, PREP_DICT, CONNECTOR_LIST,
-    GESTURE_PERSON_LIST, POSE_PERSON_LIST,
-    GESTURE_PERSON_PLURAL_LIST, POSE_PERSON_PLURAL_LIST,
-    PERSON_INFO_LIST, OBJECT_COMP_LIST, TALK_LIST,
-    COLOR_LIST, CLOTHE_LIST, CLOTHES_LIST,
-    COLOR_CLOTHE_LIST, COLOR_CLOTHES_LIST,
+    CLOTHE_LIST,
+    CLOTHES_LIST,
+    COLOR_CLOTHE_LIST,
+    COLOR_CLOTHES_LIST,
+    COLOR_LIST,
+    CONNECTOR_LIST,
+    DISTINCT_SLOT_GROUPS,
+    FOLLOWUP_OBJECTS,
+    FOLLOWUP_PEOPLE,
+    FOLLOWUP_TEMPLATES,
+    GESTURE_PERSON_LIST,
+    GESTURE_PERSON_PLURAL_LIST,
+    OBJECT_CMD_LIST,
+    OBJECT_COMP_LIST,
+    PERSON_CMD_LIST,
+    PERSON_INFO_LIST,
+    POSE_PERSON_LIST,
+    POSE_PERSON_PLURAL_LIST,
+    PREP_DICT,
+    TALK_LIST,
+    TEMPLATES,
+    TEMPLATE_VARIANTS,
+    VERB_DICT,
+    validate_template_variants,
 )
-from command_utils import CommandUtilsMixin
 from command_goals import CommandGoalsMixin
+from command_utils import CommandUtilsMixin
 
 
 class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
+    """Genera pares supervisados ``input``/``goals`` desde catálogos cerrados."""
+
     def __init__(self, knowledge, debug=False):
         self.knowledge = knowledge
         self.debug = debug
@@ -31,7 +52,8 @@ class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
         if template_issues:
             raise ValueError("Invalid surface template catalog: " + "; ".join(template_issues))
 
-        # Copiar diccionarios y listas desde constantes
+        # Se copian los contenedores para que una prueba pueda personalizar una
+        # instancia sin modificar los catálogos globales del siguiente test.
         self.templates = TEMPLATES.copy()
         self.template_variants = {
             family: tuple(variants) for family, variants in TEMPLATE_VARIANTS.items()
@@ -58,7 +80,8 @@ class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
         self.color_clothe_list = COLOR_CLOTHE_LIST.copy()
         self.color_clothes_list = COLOR_CLOTHES_LIST.copy()
 
-        # Diccionario de generadores de metas (depende de métodos del mixin)
+        # Registro explícito familia -> función semántica. Añadir una familia a
+        # TEMPLATE_VARIANTS sin registrarla aquí debe considerarse incompleto.
         self.goal_generators = {
             "goToLoc": self._goals_goToLoc,
             "takeObjFromPlcmt": self._goals_takeObjFromPlcmt,
@@ -82,7 +105,8 @@ class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
             "countClothPrsInRoom": self._goals_countClothPrsInRoom,
             "tellPrsInfoAtLocToPrsAtLoc": self._goals_tellPrsInfoAtLocToPrsAtLoc,
             "followPrsAtLoc": self._goals_followPrsAtLoc,
-            # Follow‑ups
+            # Los follow-ups usan el mismo registro porque también producen
+            # goals y pueden encadenar otro follow-up.
             "findObj": self._goals_findObj,
             "findPrs": self._goals_findPrs,
             "meetName": self._goals_meetName,
@@ -106,10 +130,14 @@ class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
             "greetNameInRoomSimple": self._goals_greetNameInRoomSimple,
         }
 
-    # Métodos públicos principales (sin cambios)
     def enumerate_command_variants(
         self, command_key, cmd_category="", include_invalid_combinations=False
     ):
+        """Renderiza una muestra determinista por superficie y ruta de follow-up.
+
+        Se usa para descubrir firmas y depurar el catálogo. No intenta enumerar
+        el producto cartesiano completo de nombres, objetos y ubicaciones.
+        """
         results = []
         for surface_index, template in enumerate(
             self.template_variants[command_key], start=1
@@ -134,7 +162,7 @@ class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
         return results
 
     def _context_satisfies_constraints(self, command_key, context):
-        """Comprueba restricciones semánticas sin depender de la superficie."""
+        """Comprueba origen/destino sobre slots, no sobre palabras renderizadas."""
         for slot_group in self.distinct_slot_groups.get(command_key, ()):
             values = [
                 str(context[slot]).strip().casefold()
@@ -146,6 +174,13 @@ class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
         return True
 
     def generate_command_start(self, cmd_category="", return_goals=True):
+        """Genera una muestra aleatoria válida de la categoría solicitada.
+
+        ``cmd_category`` puede ser ``people``, ``objects`` o vacío. La categoría
+        limita familias y follow-ups; ``kind`` todavía queda explícito en goals.
+        """
+        # 1) Seleccionar una familia respetando los pesos declarados. El
+        # balanceador de generate_dataset.py puede forzar esta selección.
         cmd_list = (
             self.person_cmd_list if cmd_category == "people"
             else self.object_cmd_list if cmd_category == "objects"
@@ -160,12 +195,14 @@ class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
             return {"input": "WARNING", "goals": []} if return_goals else "WARNING"
 
         self._debug_print(f"Command selected: {command_key}")
-        # Renderizar de nuevo cuando una combinación viola una restricción como
+        # 2) Renderizar de nuevo cuando una combinación viola una restricción como
         # origen == destino. No se reescribe el texto después de generarlo: la
         # superficie y los valores semánticos continúan compartiendo el contexto.
         for _ in range(50):
             surface_index = random.randrange(len(self.template_variants[command_key]))
             template = self.template_variants[command_key][surface_index]
+            # El mismo contexto recibe los valores usados en la frase y luego
+            # alimenta command_goals.py. Esa identidad evita labels desalineados.
             context = {}
             text = self._resolve_followups_with_context(
                 template, cmd_category, context, command_key
@@ -179,6 +216,8 @@ class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):
                 continue
             self._propagate_context_references(context)
             goals = self._generate_goals(command_key, context)
+            # La validación final también detecta redundancias introducidas en
+            # follow-ups anidados que no son visibles en el contexto principal.
             if validate_goals(goals):
                 continue
             break

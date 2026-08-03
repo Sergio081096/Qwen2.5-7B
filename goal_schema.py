@@ -61,6 +61,8 @@ _ALLOWED_KWARGS = {
 
 @dataclass(frozen=True)
 class ParsedGoal:
+    """Representación intermedia de un string como ``find(Robin, kind=person)``."""
+
     name: str
     args: tuple[str, ...]
     kwargs: Mapping[str, str]
@@ -86,6 +88,8 @@ class ParsedGoal:
 
 @dataclass(frozen=True)
 class ValidationIssue:
+    """Error estable y contabilizable; ``code`` se usa en reportes agregados."""
+
     code: str
     message: str
     goal_index: int | None = None
@@ -108,6 +112,7 @@ def _split_top_level(body: str) -> list[str]:
 
 
 def parse_goal(raw_goal: str) -> ParsedGoal:
+    """Separa nombre, argumentos posicionales y slots de un goal canónico."""
     match = _GOAL_RE.match(raw_goal)
     if not match:
         raise ValueError(f"invalid goal syntax: {raw_goal}")
@@ -134,6 +139,7 @@ def parse_goals(goals: Iterable[str]) -> list[ParsedGoal]:
 
 
 def validate_goals(goals: Sequence[str]) -> list[ValidationIssue]:
+    """Valida primero cada acción y después la coherencia de toda la secuencia."""
     issues: list[ValidationIssue] = []
     if not goals:
         return [ValidationIssue("empty_goals", "the goal list is empty")]
@@ -287,14 +293,17 @@ def _validate_sequence(goals: Sequence[ParsedGoal]) -> list[ValidationIssue]:
 
 
 def goal_signature(goals: Sequence[str]) -> list[str]:
+    """Devuelve solo los verbos para poder balancear estructuras semánticas."""
     return [parse_goal(goal).name for goal in goals]
 
 
 def entity_kinds(goals: Sequence[str]) -> list[str]:
+    """Enumera los tipos de entidad presentes sin usar capitalización."""
     return sorted({goal.entity_kind for goal in parse_goals(goals) if goal.entity_kind})
 
 
 def slot_names(goals: Sequence[str]) -> list[str]:
+    """Resume la cobertura de slots de una etiqueta para sus metadatos."""
     slots = {"target"}
     for goal in parse_goals(goals):
         slots.update(goal.kwargs)

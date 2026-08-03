@@ -1,5 +1,10 @@
-# command_constants.py
-# Diccionarios y listas estáticas utilizadas por CommandGenerator
+"""Catálogo declarativo de superficies, follow-ups y vocabulario GPSR.
+
+Modificar una frase suele requerir tocar solo ``TEMPLATE_VARIANTS``. Modificar
+su significado requiere además un método en ``command_goals.py`` y registrarlo
+en ``gpsr_commands.py``. Esta separación evita que una paráfrasis cambie el
+label por accidente.
+"""
 
 import itertools
 import re
@@ -175,7 +180,11 @@ def semantic_surface_fields(template):
 
 
 def validate_template_variants(template_variants=TEMPLATE_VARIANTS):
-    """Falla si una paráfrasis altera los slots semánticos de su familia."""
+    """Reporta si una paráfrasis altera los slots semánticos de su familia.
+
+    Se ignoran verbos, preposiciones y artículos porque pertenecen a la
+    superficie; nombres, objetos, ubicaciones y FOLLOWUP sí deben coincidir.
+    """
     issues = []
     for family, variants in template_variants.items():
         if not 3 <= len(variants) <= 5:
@@ -191,6 +200,8 @@ def validate_template_variants(template_variants=TEMPLATE_VARIANTS):
                 )
     return issues
 
+# Los follow-ups son subórdenes insertadas recursivamente. Su contexto conserva
+# ``current_person``/``current_obj`` para que it/them apunten a la misma entidad.
 FOLLOWUP_TEMPLATES = {
     "findObj": "{findVerb} {art} {obj_singCat} and {FOLLOWUP:foundObj}",
     "findPrs": "{findVerb} the {gestPers_posePers} and {FOLLOWUP:foundPers}",

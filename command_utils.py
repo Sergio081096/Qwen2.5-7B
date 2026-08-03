@@ -1,16 +1,22 @@
-# command_utils.py
-# Mixin con métodos auxiliares para CommandGenerator
+"""Renderizado de plantillas con contexto compartido y follow-ups recursivos.
+
+Los métodos ``*_enum`` eligen valores deterministas para inspección. Los demás
+muestrean valores aleatorios para el dataset. Ambos escriben los valores en un
+diccionario ``context``; ``command_goals.py`` lee después ese mismo diccionario.
+"""
 
 import random
 import re
 import warnings
 
 class CommandUtilsMixin:
+    """Utilidades de superficie; no debe decidir la semántica de los goals."""
     def _debug_print(self, *args, **kwargs):
         if self.debug:
             print("[DEBUG]", *args, **kwargs)
 
     def _get_followup_options(self, key, cmd_category):
+        """Restringe follow-ups a la categoría para evitar acciones incompatibles."""
         if cmd_category == "people":
             return self.followup_people.get(key, [])
         elif cmd_category == "objects":
@@ -19,6 +25,7 @@ class CommandUtilsMixin:
             return self.followup_people.get(key, []) + self.followup_objects.get(key, [])
 
     def _insert_placeholder_enum(self, ph, context):
+        """Resuelve un placeholder de forma determinista para enumeración."""
         ph_clean = ph.replace("{", "").replace("}", "")
         ph_raw = ph_clean
         if ph_clean in context:
@@ -197,6 +204,12 @@ class CommandUtilsMixin:
                 yield from self._enumerate_followup_resolutions(new_template, cmd_category, merged_ctx)
 
     def _resolve_followups_with_context(self, template, cmd_category, context, base_cmd_key=None):
+        """Expande marcadores FOLLOWUP y conserva su subcontexto semántico.
+
+        Cada follow-up recibe un subcontexto propio para evitar colisiones de
+        slots como ``room`` y ``room2``. La referencia se guarda bajo
+        ``followup_<key>`` para reconstruir la misma cadena en los goals.
+        """
         matches = re.findall(r"\{FOLLOWUP:(\w+)\}", template)
         for key in matches:
             cmd = self._sample_followup(key, cmd_category)
@@ -225,6 +238,7 @@ class CommandUtilsMixin:
         return template
 
     def insert_all_placeholders_with_context(self, string, context):
+        """Sustituye placeholders y registra cada valor elegido en ``context``."""
         self._debug_print("insert_all_placeholders_with_context on:", string[:80])
         for ph in re.findall(r"(\{\w+\})", string):
             value = self._insert_placeholder_with_context(ph, context)
@@ -320,6 +334,7 @@ class CommandUtilsMixin:
         return text
 
     def _resolve_duplicates(self, text, context=None):
+        """Resuelve slots diferidos ``*2`` evitando repetir entidades del texto."""
         if context is None:
             context = {}
         if "{loc2}" in text:
@@ -352,6 +367,7 @@ class CommandUtilsMixin:
         return random.choice(pool) if pool else ""
 
     def _propagate_context_references(self, context):
+        """Propaga la entidad actual a follow-ups que usan pronombres como it/them."""
         for key, value in context.items():
             if key.startswith("followup_") and isinstance(value, dict) and "context" in value:
                 sub_ctx = value["context"]

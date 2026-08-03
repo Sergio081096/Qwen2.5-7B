@@ -1,0 +1,1277 @@
+{
+  "report": {
+    "totals": {
+      "samples": 48,
+      "exact": 47,
+      "schema_valid": 48,
+      "clips_checked": 48,
+      "clips_planifiable": 48,
+      "exact_accuracy": 0.9791666666666666,
+      "schema_valid_rate": 1.0,
+      "clips_planifiable_rate": 1.0,
+      "casefold_exact": 48,
+      "casefold_exact_accuracy": 1.0,
+      "case_only_differences": 1
+    },
+    "families": {
+      "findNameInRoom": {
+        "total": 4,
+        "exact": 4,
+        "accuracy": 1.0,
+        "casefold_exact": 4,
+        "casefold_accuracy": 1.0
+      },
+      "findObjectInRoomSimple": {
+        "total": 4,
+        "exact": 4,
+        "accuracy": 1.0,
+        "casefold_exact": 4,
+        "casefold_accuracy": 1.0
+      },
+      "entityKindAdversarial": {
+        "total": 1,
+        "exact": 0,
+        "accuracy": 0.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "greetNameInRoomSimple": {
+        "total": 3,
+        "exact": 3,
+        "accuracy": 1.0,
+        "casefold_exact": 3,
+        "casefold_accuracy": 1.0
+      },
+      "meetNameAtLocThenFindInRm": {
+        "total": 3,
+        "exact": 3,
+        "accuracy": 1.0,
+        "casefold_exact": 3,
+        "casefold_accuracy": 1.0
+      },
+      "simpleGoToLoc": {
+        "total": 2,
+        "exact": 2,
+        "accuracy": 1.0,
+        "casefold_exact": 2,
+        "casefold_accuracy": 1.0
+      },
+      "findPrsInRoom": {
+        "total": 2,
+        "exact": 2,
+        "accuracy": 1.0,
+        "casefold_exact": 2,
+        "casefold_accuracy": 1.0
+      },
+      "meetPrsAtBeac": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "goToLoc": {
+        "total": 2,
+        "exact": 2,
+        "accuracy": 1.0,
+        "casefold_exact": 2,
+        "casefold_accuracy": 1.0
+      },
+      "countPrsInRoom": {
+        "total": 2,
+        "exact": 2,
+        "accuracy": 1.0,
+        "casefold_exact": 2,
+        "casefold_accuracy": 1.0
+      },
+      "tellPrsInfoInLoc": {
+        "total": 2,
+        "exact": 2,
+        "accuracy": 1.0,
+        "casefold_exact": 2,
+        "casefold_accuracy": 1.0
+      },
+      "talkInfoToGestPrsInRoom": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "followNameFromBeacToRoom": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "guideNameFromBeacToBeac": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "guidePrsFromBeacToBeac": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "guideClothPrsFromBeacToBeac": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "greetClothDscInRm": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "greetNameInRm": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "countClothPrsInRoom": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "tellPrsInfoAtLocToPrsAtLoc": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "followPrsAtLoc": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "answerQuestionOfPersInRoom": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "takeObjFromPlcmt": {
+        "total": 2,
+        "exact": 2,
+        "accuracy": 1.0,
+        "casefold_exact": 2,
+        "casefold_accuracy": 1.0
+      },
+      "findObjInRoom": {
+        "total": 2,
+        "exact": 2,
+        "accuracy": 1.0,
+        "casefold_exact": 2,
+        "casefold_accuracy": 1.0
+      },
+      "countObjOnPlcmt": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "tellObjPropOnPlcmt": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "bringMeObjFromPlcmt": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "tellCatPropOnPlcmt": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      },
+      "bringObjFromTo": {
+        "total": 2,
+        "exact": 2,
+        "accuracy": 1.0,
+        "casefold_exact": 2,
+        "casefold_accuracy": 1.0
+      },
+      "takeObjInRoom": {
+        "total": 1,
+        "exact": 1,
+        "accuracy": 1.0,
+        "casefold_exact": 1,
+        "casefold_accuracy": 1.0
+      }
+    },
+    "entity_kinds": {
+      "person": {
+        "total": 33,
+        "correct": 33,
+        "accuracy": 1.0
+      },
+      "object": {
+        "total": 17,
+        "correct": 17,
+        "accuracy": 1.0
+      }
+    },
+    "slots": {
+      "expected": 225,
+      "correct": 224,
+      "predicted": 225,
+      "recall": 0.9955555555555555,
+      "precision": 0.9955555555555555,
+      "f1": 0.9955555555555555
+    },
+    "casefold_slots": {
+      "correct": 225,
+      "expected": 225,
+      "predicted": 225,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "runtime": {
+      "seconds": 91.48159139000018,
+      "samples_per_second": 0.5246957258905628
+    }
+  },
+  "cases": [
+    {
+      "id": "find_person_01",
+      "family": "findNameInRoom",
+      "input": "please head to the living_room then look around for Robin",
+      "normalized_input": "go to the living room then find Robin",
+      "expected": [
+        "go(living room)",
+        "find(Robin, kind=person)"
+      ],
+      "predicted": [
+        "go(living room)",
+        "find(Robin, kind=person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_person_02",
+      "family": "findNameInRoom",
+      "input": "search the office for Sarah",
+      "normalized_input": "search the office for Sarah",
+      "expected": [
+        "go(office)",
+        "find(Sarah, kind=person)"
+      ],
+      "predicted": [
+        "go(office)",
+        "find(Sarah, kind=person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_person_03",
+      "family": "findNameInRoom",
+      "input": "could you locate Adel in the kitchen",
+      "normalized_input": "locate Adel in the kitchen",
+      "expected": [
+        "go(kitchen)",
+        "find(Adel, kind=person)"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "find(Adel, kind=person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_person_04",
+      "family": "findNameInRoom",
+      "input": "go to the bathroom and find Morgan",
+      "normalized_input": "go to the bathroom and find Morgan",
+      "expected": [
+        "go(bathroom)",
+        "find(Morgan, kind=person)"
+      ],
+      "predicted": [
+        "go(bathroom)",
+        "find(Morgan, kind=person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_object_01",
+      "family": "findObjectInRoomSimple",
+      "input": "search the kitchen for a snack",
+      "normalized_input": "search the kitchen for a snack",
+      "expected": [
+        "go(kitchen)",
+        "find(snack, kind=object)"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "find(snack, kind=object)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_object_02",
+      "family": "findObjectInRoomSimple",
+      "input": "go to the bedroom then locate a cleaning supply",
+      "normalized_input": "go to the bedroom then locate a cleaning supply",
+      "expected": [
+        "go(bedroom)",
+        "find(cleaning supply, kind=object)"
+      ],
+      "predicted": [
+        "go(bedroom)",
+        "find(cleaning supply, kind=object)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_object_03",
+      "family": "findObjectInRoomSimple",
+      "input": "please look around the office for a drink",
+      "normalized_input": "look around the office for a drink",
+      "expected": [
+        "go(office)",
+        "find(drink, kind=object)"
+      ],
+      "predicted": [
+        "go(office)",
+        "find(drink, kind=object)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_object_04",
+      "family": "findObjectInRoomSimple",
+      "input": "head to the corridor and find a tennis ball",
+      "normalized_input": "go to the corridor and find a tennis ball",
+      "expected": [
+        "go(corridor)",
+        "find(tennis ball, kind=object)"
+      ],
+      "predicted": [
+        "go(corridor)",
+        "find(tennis ball, kind=object)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "kind_object_01",
+      "family": "entityKindAdversarial",
+      "input": "find Water in the kitchen",
+      "normalized_input": "find water in the kitchen",
+      "expected": [
+        "go(kitchen)",
+        "find(Water, kind=object)"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "find(water, kind=object)"
+      ],
+      "exact": false,
+      "casefold_exact": true,
+      "case_only_difference": true,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "greet_simple_01",
+      "family": "greetNameInRoomSimple",
+      "input": "find Charlie in the corridor and say hello to them",
+      "normalized_input": "find Charlie in the corridor and say hello to them",
+      "expected": [
+        "go(corridor)",
+        "find(Charlie, kind=person)",
+        "greet(Charlie)"
+      ],
+      "predicted": [
+        "go(corridor)",
+        "find(Charlie, kind=person)",
+        "greet(Charlie)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "greet_simple_02",
+      "family": "greetNameInRoomSimple",
+      "input": "please go to the kitchen, locate Angel, and greet them",
+      "normalized_input": "go to the kitchen locate Angel and greet them",
+      "expected": [
+        "go(kitchen)",
+        "find(Angel, kind=person)",
+        "greet(Angel)"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "find(Angel, kind=person)",
+        "greet(Angel)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "greet_simple_03",
+      "family": "greetNameInRoomSimple",
+      "input": "introduce yourself to Jules in the office",
+      "normalized_input": "introduce yourself to Jules in the office",
+      "expected": [
+        "go(office)",
+        "find(Jules, kind=person)",
+        "greet(Jules)"
+      ],
+      "predicted": [
+        "go(office)",
+        "find(Jules, kind=person)",
+        "greet(Jules)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "meet_twice_01",
+      "family": "meetNameAtLocThenFindInRm",
+      "input": "meet Sarah at the potted plant then locate them in the corridor",
+      "normalized_input": "meet Sarah at the potted plant then locate them in the corridor",
+      "expected": [
+        "go(potted plant)",
+        "find(Sarah, kind=person)",
+        "go(corridor)",
+        "find(Sarah, kind=person)"
+      ],
+      "predicted": [
+        "go(potted plant)",
+        "find(Sarah, kind=person)",
+        "go(corridor)",
+        "find(Sarah, kind=person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "meet_twice_02",
+      "family": "meetNameAtLocThenFindInRm",
+      "input": "first meet Robin at the shelf and afterwards search the office for them",
+      "normalized_input": "first meet Robin at the shelf then search the office for them",
+      "expected": [
+        "go(shelf)",
+        "find(Robin, kind=person)",
+        "go(office)",
+        "find(Robin, kind=person)"
+      ],
+      "predicted": [
+        "go(shelf)",
+        "find(Robin, kind=person)",
+        "go(office)",
+        "find(Robin, kind=person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "meet_twice_03",
+      "family": "meetNameAtLocThenFindInRm",
+      "input": "contact Adel by the sofa, then find them in the bedroom",
+      "normalized_input": "contact Adel by the sofa then find them in the bedroom",
+      "expected": [
+        "go(sofa)",
+        "find(Adel, kind=person)",
+        "go(bedroom)",
+        "find(Adel, kind=person)"
+      ],
+      "predicted": [
+        "go(sofa)",
+        "find(Adel, kind=person)",
+        "go(bedroom)",
+        "find(Adel, kind=person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "simple_go_01",
+      "family": "simpleGoToLoc",
+      "input": "uh could you make your way to the kichen",
+      "normalized_input": "go to the kitchen",
+      "expected": [
+        "go(kitchen)"
+      ],
+      "predicted": [
+        "go(kitchen)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "simple_go_02",
+      "family": "simpleGoToLoc",
+      "input": "head over to the inspection point",
+      "normalized_input": "go to the inspection point",
+      "expected": [
+        "go(inspection point)"
+      ],
+      "predicted": [
+        "go(inspection point)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_follow_01",
+      "family": "findPrsInRoom",
+      "input": "search the office for the standing person and follow them",
+      "normalized_input": "search the office for the standing person and follow them",
+      "expected": [
+        "go(office)",
+        "find(person, kind=person, pose='standing person')",
+        "follow(person)"
+      ],
+      "predicted": [
+        "go(office)",
+        "find(person, kind=person, pose='standing person')",
+        "follow(person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_guide_01",
+      "family": "findPrsInRoom",
+      "input": "in the kitchen locate the waving person and guide them to the exit",
+      "normalized_input": "in the kitchen locate the waving person and guide them to the exit",
+      "expected": [
+        "go(kitchen)",
+        "find(person, kind=person, gesture='waving person')",
+        "guide(person, to=exit)"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "find(person, kind=person, gesture='waving person')",
+        "guide(person, to=exit)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "meet_follow_01",
+      "family": "meetPrsAtBeac",
+      "input": "meet Matthew in the entrance and follow them",
+      "normalized_input": "meet Matthew in the entrance and follow them",
+      "expected": [
+        "go(entrance)",
+        "find(Matthew, kind=person)",
+        "follow(Matthew)"
+      ],
+      "predicted": [
+        "go(entrance)",
+        "find(Matthew, kind=person)",
+        "follow(Matthew)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "go_talk_01",
+      "family": "goToLoc",
+      "input": "go to the refrigerator, meet Simone, and tell the time",
+      "normalized_input": "go to the refrigerator meet Simone and tell the time",
+      "expected": [
+        "go(refrigerator)",
+        "find(Simone, kind=person)",
+        "talk('the time')"
+      ],
+      "predicted": [
+        "go(refrigerator)",
+        "find(Simone, kind=person)",
+        "talk('the time')"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "count_person_01",
+      "family": "countPrsInRoom",
+      "input": "tell me how many people are standing in the office",
+      "normalized_input": "tell me how many people are standing in the office",
+      "expected": [
+        "go(office)",
+        "count(person, kind=person, pose='standing person')"
+      ],
+      "predicted": [
+        "go(office)",
+        "count(person, kind=person, pose='standing person')"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "count_person_02",
+      "family": "countPrsInRoom",
+      "input": "count the waving persons in the kitchen",
+      "normalized_input": "count the waving persons in the kitchen",
+      "expected": [
+        "go(kitchen)",
+        "count(person, kind=person, gesture='waving person')"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "count(person, kind=person, gesture='waving person')"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "person_info_01",
+      "family": "tellPrsInfoInLoc",
+      "input": "tell me the pose of the person in the kitchen",
+      "normalized_input": "tell me the pose of the person in the kitchen",
+      "expected": [
+        "go(kitchen)",
+        "find(person, kind=person)",
+        "save(pose)",
+        "go(instruction_point)",
+        "tell(pose)"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "find(person, kind=person)",
+        "save(pose)",
+        "go(instruction_point)",
+        "tell(pose)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "person_info_02",
+      "family": "tellPrsInfoInLoc",
+      "input": "find the person at the shelf, learn their name, and report it to me",
+      "normalized_input": "find the person at the shelf learn their name and report it to me",
+      "expected": [
+        "go(shelf)",
+        "find(person, kind=person)",
+        "save(name)",
+        "go(instruction_point)",
+        "tell(name)"
+      ],
+      "predicted": [
+        "go(shelf)",
+        "find(person, kind=person)",
+        "save(name)",
+        "go(instruction_point)",
+        "tell(name)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "talk_person_01",
+      "family": "talkInfoToGestPrsInRoom",
+      "input": "in the laundry find the person raising their left arm and tell them the time",
+      "normalized_input": "in the laundry find the person raising their left arm and tell them the time",
+      "expected": [
+        "go(laundry)",
+        "find(person, kind=person, gesture='person raising their left arm')",
+        "talk('the time')"
+      ],
+      "predicted": [
+        "go(laundry)",
+        "find(person, kind=person, gesture='person raising their left arm')",
+        "talk('the time')"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "follow_name_01",
+      "family": "followNameFromBeacToRoom",
+      "input": "meet Jane at the refrigerator and follow her to the exit",
+      "normalized_input": "meet Jane at the refrigerator and follow her to the exit",
+      "expected": [
+        "go(refrigerator)",
+        "find(Jane, kind=person)",
+        "follow(Jane, to=exit)"
+      ],
+      "predicted": [
+        "go(refrigerator)",
+        "find(Jane, kind=person)",
+        "follow(Jane, to=exit)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "guide_name_01",
+      "family": "guideNameFromBeacToBeac",
+      "input": "from the cabinet escort William to the laundry",
+      "normalized_input": "from the cabinet escort William to the laundry",
+      "expected": [
+        "go(cabinet)",
+        "find(William, kind=person)",
+        "guide(William, to=laundry)"
+      ],
+      "predicted": [
+        "go(cabinet)",
+        "find(William, kind=person)",
+        "guide(William, to=laundry)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "guide_pose_01",
+      "family": "guidePrsFromBeacToBeac",
+      "input": "find the sitting person at the entrance and lead them to the office",
+      "normalized_input": "find the sitting person at the entrance and lead them to the office",
+      "expected": [
+        "go(entrance)",
+        "find(person, kind=person, pose='sitting person')",
+        "guide(person, to=office)"
+      ],
+      "predicted": [
+        "go(entrance)",
+        "find(person, kind=person, pose='sitting person')",
+        "guide(person, to=office)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "guide_clothes_01",
+      "family": "guideClothPrsFromBeacToBeac",
+      "input": "take the person wearing a red shirt from the sofa to the kitchen",
+      "normalized_input": "take the person wearing a red shirt from the sofa to the kitchen",
+      "expected": [
+        "go(sofa)",
+        "find(person, kind=person, wearing='red shirt')",
+        "guide(person, to=kitchen)"
+      ],
+      "predicted": [
+        "go(sofa)",
+        "find(person, kind=person, wearing='red shirt')",
+        "guide(person, to=kitchen)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "greet_clothes_01",
+      "family": "greetClothDscInRm",
+      "input": "in the bedroom greet the person wearing a blue jacket and then follow them",
+      "normalized_input": "in the bedroom greet the person wearing a blue jacket then follow them",
+      "expected": [
+        "go(bedroom)",
+        "find(person, kind=person, wearing='blue jacket')",
+        "greet(person)",
+        "follow(person)"
+      ],
+      "predicted": [
+        "go(bedroom)",
+        "find(person, kind=person, wearing='blue jacket')",
+        "greet(person)",
+        "follow(person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "greet_name_compound_01",
+      "family": "greetNameInRm",
+      "input": "find Axel in the entrance, greet them, and tell something about yourself",
+      "normalized_input": "find Axel in the entrance greet them and tell something about yourself",
+      "expected": [
+        "go(entrance)",
+        "find(Axel, kind=person)",
+        "greet(Axel)",
+        "talk('something about yourself')"
+      ],
+      "predicted": [
+        "go(entrance)",
+        "find(Axel, kind=person)",
+        "greet(Axel)",
+        "talk('something about yourself')"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "count_clothes_01",
+      "family": "countClothPrsInRoom",
+      "input": "count the people wearing gray sweaters in the bedroom",
+      "normalized_input": "count the people wearing gray sweaters in the bedroom",
+      "expected": [
+        "go(bedroom)",
+        "count(person, kind=person, wearing='gray sweater')"
+      ],
+      "predicted": [
+        "go(bedroom)",
+        "count(person, kind=person, wearing='gray sweater')"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "relay_info_01",
+      "family": "tellPrsInfoAtLocToPrsAtLoc",
+      "input": "learn the gesture of the person at the bed then report it to the person at the side tables",
+      "normalized_input": "learn the gesture of the person at the bed then report it to the person at the side tables",
+      "expected": [
+        "go(bed)",
+        "find(person, kind=person)",
+        "save(gesture)",
+        "go(side tables)",
+        "find(person, kind=person)",
+        "tell(gesture)"
+      ],
+      "predicted": [
+        "go(bed)",
+        "find(person, kind=person)",
+        "save(gesture)",
+        "go(side tables)",
+        "find(person, kind=person)",
+        "tell(gesture)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "follow_descriptor_01",
+      "family": "followPrsAtLoc",
+      "input": "find the person pointing to the left at the entrance and follow them",
+      "normalized_input": "find the person pointing to the left at the entrance and follow them",
+      "expected": [
+        "go(entrance)",
+        "find(person, kind=person, gesture='person pointing to the left')",
+        "follow(person)"
+      ],
+      "predicted": [
+        "go(entrance)",
+        "find(person, kind=person, gesture='person pointing to the left')",
+        "follow(person)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "answer_question_01",
+      "family": "answerQuestionOfPersInRoom",
+      "input": "answer the question of the waving person in the ofice",
+      "normalized_input": "answer the question of the waving person in the office",
+      "expected": [
+        "go(office)",
+        "find(person, kind=person, gesture='waving person')",
+        "answer_question()"
+      ],
+      "predicted": [
+        "go(office)",
+        "find(person, kind=person, gesture='waving person')",
+        "answer_question()"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "take_place_01",
+      "family": "takeObjFromPlcmt",
+      "input": "take an apple from the shelf and put it on the side tables",
+      "normalized_input": "take an apple from the shelf and put it on the side tables",
+      "expected": [
+        "go(shelf)",
+        "find(apple, kind=object)",
+        "take(apple)",
+        "place(apple, on=side tables)"
+      ],
+      "predicted": [
+        "go(shelf)",
+        "find(apple, kind=object)",
+        "take(apple)",
+        "place(apple, on=side tables)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "take_deliver_01",
+      "family": "takeObjFromPlcmt",
+      "input": "fetch a cleanser from the refridgerator and bring it to me",
+      "normalized_input": "fetch a cleanser from the refrigerator and bring it to me",
+      "expected": [
+        "go(refrigerator)",
+        "find(cleanser, kind=object)",
+        "take(cleanser)",
+        "deliver(cleanser, to=me)"
+      ],
+      "predicted": [
+        "go(refrigerator)",
+        "find(cleanser, kind=object)",
+        "take(cleanser)",
+        "deliver(cleanser, to=me)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_take_01",
+      "family": "findObjInRoom",
+      "input": "search the kitchen for a snack, get it, and deliver it to me",
+      "normalized_input": "search the kitchen for a snack get it and deliver it to me",
+      "expected": [
+        "go(kitchen)",
+        "find(snack, kind=object)",
+        "take(snack)",
+        "deliver(snack, to=me)"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "find(snack, kind=object)",
+        "take(snack)",
+        "deliver(snack, to=me)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "find_take_drop_01",
+      "family": "findObjInRoom",
+      "input": "find a drink in the bedroom, take it, and throw it in the trash",
+      "normalized_input": "find a drink in the bedroom take it and throw it in the trash",
+      "expected": [
+        "go(bedroom)",
+        "find(drink, kind=object)",
+        "take(drink)",
+        "drop(drink, in=trash)"
+      ],
+      "predicted": [
+        "go(bedroom)",
+        "find(drink, kind=object)",
+        "take(drink)",
+        "drop(drink, in=trash)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "count_object_01",
+      "family": "countObjOnPlcmt",
+      "input": "count the drinks on the cabinet",
+      "normalized_input": "count the drinks on the cabinet",
+      "expected": [
+        "go(cabinet)",
+        "count(drinks, kind=object)"
+      ],
+      "predicted": [
+        "go(cabinet)",
+        "count(drinks, kind=object)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "object_property_01",
+      "family": "tellObjPropOnPlcmt",
+      "input": "tell me what is the largest object on the sofa",
+      "normalized_input": "tell me what is the largest object on the sofa",
+      "expected": [
+        "go(sofa)",
+        "find(object, kind=object, property=largest)",
+        "tell(object,property=largest)"
+      ],
+      "predicted": [
+        "go(sofa)",
+        "find(object, kind=object, property=largest)",
+        "tell(object,property=largest)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "bring_me_01",
+      "family": "bringMeObjFromPlcmt",
+      "input": "from the refrigerator fetch an orange juice for me",
+      "normalized_input": "from the refrigerator fetch an orange juice for me",
+      "expected": [
+        "go(refrigerator)",
+        "find(orange juice, kind=object)",
+        "take(orange juice)",
+        "deliver(orange juice, to=me)"
+      ],
+      "predicted": [
+        "go(refrigerator)",
+        "find(orange juice, kind=object)",
+        "take(orange juice)",
+        "deliver(orange juice, to=me)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "category_property_01",
+      "family": "tellCatPropOnPlcmt",
+      "input": "on the shelf identify the heaviest drink and tell me",
+      "normalized_input": "on the shelf identify the heaviest drink and tell me",
+      "expected": [
+        "go(shelf)",
+        "find(drink, kind=object, property=heaviest)",
+        "tell(drink,property=heaviest)"
+      ],
+      "predicted": [
+        "go(shelf)",
+        "find(drink, kind=object, property=heaviest)",
+        "tell(drink,property=heaviest)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "bring_from_to_01",
+      "family": "bringObjFromTo",
+      "input": "bring a cleanser from the refrigerator to the sofa",
+      "normalized_input": "bring a cleanser from the refrigerator to the sofa",
+      "expected": [
+        "go(refrigerator)",
+        "find(cleanser, kind=object)",
+        "take(cleanser)",
+        "place(cleanser, at=sofa)"
+      ],
+      "predicted": [
+        "go(refrigerator)",
+        "find(cleanser, kind=object)",
+        "take(cleanser)",
+        "place(cleanser, at=sofa)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "bring_from_to_02",
+      "family": "bringObjFromTo",
+      "input": "from the bed fetch a banana and take it to the cabinet",
+      "normalized_input": "from the bed fetch a banana and take it to the cabinet",
+      "expected": [
+        "go(bed)",
+        "find(banana, kind=object)",
+        "take(banana)",
+        "place(banana, at=cabinet)"
+      ],
+      "predicted": [
+        "go(bed)",
+        "find(banana, kind=object)",
+        "take(banana)",
+        "place(banana, at=cabinet)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "take_room_01",
+      "family": "takeObjInRoom",
+      "input": "go to the office and pick up a mug",
+      "normalized_input": "go to the office and take a mug",
+      "expected": [
+        "go(office)",
+        "find(mug, kind=object)",
+        "take(mug)"
+      ],
+      "predicted": [
+        "go(office)",
+        "find(mug, kind=object)",
+        "take(mug)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    },
+    {
+      "id": "go_object_compound_01",
+      "family": "goToLoc",
+      "input": "go to the kitchen, find an apple, take it, and bring it to me",
+      "normalized_input": "go to the kitchen find an apple take it and bring it to me",
+      "expected": [
+        "go(kitchen)",
+        "find(apple, kind=object)",
+        "take(apple)",
+        "deliver(apple, to=me)"
+      ],
+      "predicted": [
+        "go(kitchen)",
+        "find(apple, kind=object)",
+        "take(apple)",
+        "deliver(apple, to=me)"
+      ],
+      "exact": true,
+      "casefold_exact": true,
+      "case_only_difference": false,
+      "prediction_error": null,
+      "raw": null
+    }
+  ]
+}

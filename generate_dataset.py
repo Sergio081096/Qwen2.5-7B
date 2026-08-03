@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
-"""
-Script para generar un dataset balanceado de comandos GPSR con metas (goals).
-Configuración manual: modifica NUM_SAMPLES y PERSON_RATIO según necesidad.
+"""Construye y valida el dataset supervisado usado por ``Nl-Cl.py``.
+
+El script no inventa la semántica directamente. ``CommandGenerator`` elige una
+familia, renderiza una de sus superficies y entrega el contexto a
+``command_goals.py``. Después este archivo equilibra, deduplica y valida las
+muestras antes de escribir una sola línea en ``dataset_gpsr.jsonl``.
+
+Flujo principal::
+
+    CompetitionTemplate -> CommandGenerator -> {input, goals}
+      -> metadatos -> deduplicación/balance -> esquema/CLIPS -> JSONL
+
+La escritura se hace al final para que un error de catálogo, esquema o CLIPS no
+deje un dataset parcial que parezca apto para entrenamiento.
 """
 
 import json
 import random
 from collections import Counter
 
-from catalog_validation import DEFAULT_JUSTINA_NAMES, print_catalog_report, validate_catalogs
+from catalog_validation import (
+    DEFAULT_JUSTINA_NAMES,
+    print_catalog_report,
+    validate_catalogs,
+)
 from dataset_evaluation import (
     DEFAULT_CLIPS_RULES,
     ClipsPlanValidator,
@@ -20,6 +35,8 @@ from gpsr_commands import CommandGenerator
 from knowledge import parse_data
 
 # ================= CONFIGURACIÓN MANUAL =================
+# Estas opciones son deliberadamente constantes: permiten registrar en Git la
+# configuración exacta con la que se creó cada versión del dataset.
 DATA_DIR = "./CompetitionTemplate"       # Directorio con los datos del mundo
 NUM_SAMPLES = 40000                      # Número total de comandos a generar
 PERSON_RATIO = 0.5                       # Proporción de comandos de personas
@@ -32,11 +49,22 @@ JUSTINA_NAMES_FILE = DEFAULT_JUSTINA_NAMES
 CLIPS_RULES_FILE = DEFAULT_CLIPS_RULES
 # ========================================================
 
-def enumerate_and_save(knowledge, output_file="command_variants.jsonl"):
+
+# ---------------------------------------------------------------------------
+# MODO DE INSPECCIÓN: enumeración determinista de superficies/follow-ups
+# ---------------------------------------------------------------------------
+def enumerate_and_save(knowledge=None, output_file="command_variants.jsonl"):
+    """Exporta superficies y follow-ups para inspección manual.
+
+    Este modo no intenta respetar ``NUM_SAMPLES`` ni las cuotas de categorías;
+    sirve para encontrar plantillas rotas o revisar qué frases puede producir
+    cada familia antes de construir el dataset balanceado.
     """
-    Genera todas las variantes posibles de todas las plantillas principales
-    (y sus follow‑ups) y las guarda en un archivo JSONL.
-    """
+
+    # Aceptar knowledge facilita pruebas; si no se proporciona, se carga igual
+    # que en main(). Este modo no se usa para el entrenamiento normal.
+    if knowledge is None:
+        knowledge = parse_data(DATA_DIR)
     gen = CommandGenerator(knowledge, debug=True)
     all_variants = []
 
@@ -62,13 +90,24 @@ def enumerate_and_save(knowledge, output_file="command_variants.jsonl"):
 
     print(f"Se escribieron {len(all_variants)} variantes en {output_file}")
 
+
 def _normalized_input(text):
-    """Crea la clave usada para detectar frases exactamente equivalentes."""
+    """Crea la clave de deduplicación sin modificar el texto que verá Qwen.
+
+    ``casefold`` evita considerar diferentes ``Find Robin`` y ``find robin``;
+    el colapso de espacios evita duplicados producidos por formato. No se
+    eliminan palabras ni se aplican alias ASR en esta etapa.
+    """
     return " ".join(text.casefold().split())
 
 
 def _enrich_sample(sample, command_key, category):
-    """Valida la etiqueta y añade metadatos que no se envían al modelo."""
+    """Valida la etiqueta y añade metadatos que no se envían al modelo.
+
+    ``family`` y ``goal_signature`` permiten auditar sesgos; el modelo aprende
+    únicamente ``input`` -> ``goals``. ``surface_template_id`` permite saber
+    cuál de las tres paráfrasis originó la muestra.
+    """
     goals = sample.get("goals", [])
     issues = validate_goals(goals)
     if issues:
@@ -90,6 +129,7 @@ def _enrich_sample(sample, command_key, category):
 
 
 def _signature_key(goals):
+    """Convierte ``[go(...), find(...)]`` en la clave ``('go', 'find')``."""
     return tuple(goal_signature(goals))
 
 
@@ -101,7 +141,12 @@ def _try_add_unique_sample(
     seen_inputs,
     target_signature=None,
 ):
-    """Genera una muestra y devuelve la razón por la que se aceptó o rechazó."""
+    """Intenta insertar una muestra y devuelve un estado auditable.
+
+    Estados esperados: ``added``, ``signature_mismatch``, ``duplicate``,
+    ``label_conflict``, ``invalid_label`` o ``generation_error``. Usar estados
+    en vez de excepciones permite medir saturación sin ocultar errores reales.
+    """
     sample = _generate_specific_command(generator, command_key, category)
     if not sample:
         return "generation_error"
@@ -130,7 +175,12 @@ def _try_add_unique_sample(
 
 
 def discover_family_signatures(generator, command_key, category):
-    """Obtiene las firmas alcanzables sin acoplarlas a frases concretas."""
+    """Obtiene las firmas alcanzables antes de calcular cuotas de balance.
+
+    Una familia puede producir varias secuencias por sus follow-ups; por
+    ejemplo, ``goToLoc`` puede terminar en ``follow``, ``guide`` o ``talk``.
+    Descubrirlas primero evita que la selección aleatoria favorezca una firma.
+    """
     variants = generator.enumerate_command_variants(
         command_key, category, include_invalid_combinations=True
     )
@@ -153,14 +203,29 @@ def generate_balanced_dataset(
     deduplicate=DEDUPLICATE,
     max_attempts_per_sample=MAX_ATTEMPTS_PER_SAMPLE,
 ):
-    """
-    Genera un dataset balanceado de comandos GPSR con estructura {input, goals}.
+    """Genera exactamente ``n_samples`` filas válidas y, opcionalmente, únicas.
+
+    El balance se calcula en tres niveles: categoría (personas/objetos), familia
+    y firma de goals. Si una familia simple agota todas sus frases únicas, el
+    déficit se redistribuye dentro de su categoría. Por eso 40,000 filas pueden
+    conservar 50/50 por categoría aunque familias pequeñas queden saturadas.
 
     Args:
         generator: instancia de CommandGenerator
         n_samples: número total de comandos a generar
         person_ratio: proporción de comandos de tipo 'people' (resto para 'objects')
-        seed: semilla aleatoria para reproducibilidad
+        seed: semilla aleatoria para reproducibilidad.
+        deduplicate: si es True, un texto normalizado aparece una sola vez.
+        max_attempts_per_sample: rechazos consecutivos antes de declarar que un
+            estrato ya no puede cumplir su cuota con facilidad.
+
+    Returns:
+        Lista barajada de registros ``{input, goals, meta}``.
+
+    Raises:
+        ValueError: configuración inválida.
+        RuntimeError: no existe suficiente diversidad para llegar al tamaño
+            solicitado sin violar las restricciones.
     """
     if seed is not None:
         random.seed(seed)
@@ -170,11 +235,14 @@ def generate_balanced_dataset(
     if n_samples < 1:
         raise ValueError("n_samples debe ser mayor que cero")
 
+    # ``seen_inputs`` guarda también el label. Esto distingue un duplicado
+    # inocuo de un conflicto peligroso: mismo texto con dos planes diferentes.
     dataset = []
     seen_inputs = {} if deduplicate else None
     rejection_stats = Counter()
 
-    # Obtener los tipos de comando por categoría (sin pesos)
+    # En este modo los pesos de PERSON_CMD_LIST/OBJECT_CMD_LIST no se usan: el
+    # reparto explícito por familia es más controlable para entrenamiento.
     person_commands = [cmd for cmd, _ in generator.person_cmd_list]
     object_commands = [cmd for cmd, _ in generator.object_cmd_list]
 
@@ -196,9 +264,9 @@ def generate_balanced_dataset(
     strata = []
     discovered_signatures = {}
 
-    # Balance jerárquico: categoría -> familia -> firma. Una familia con siete
-    # planes posibles recibe la misma cuota total que otra familia, y dentro de
-    # ella esa cuota se reparte entre sus firmas alcanzables.
+    # FASE 1: construir todos los estratos y sus cuotas objetivo.
+    # Una familia con siete planes posibles recibe primero la misma cuota total
+    # que otra familia; después su cuota se divide entre sus firmas.
     for category, commands in category_commands.items():
         family_counts = distribute_evenly(category_targets[category], commands)
         print(
@@ -220,8 +288,7 @@ def generate_balanced_dataset(
                     (command_key, category, signature, signature_target)
                 )
 
-    # Primero intenta respetar cada cuota. Si una familia agota sus variantes
-    # únicas, el déficit se redistribuye entre las demás familias.
+    # FASE 2: llenar cada estrato hasta su cuota o hasta detectar saturación.
     actual_counts = Counter()
     active_fill_strata = set()
     for cmd_type, category, signature, requested in strata:
@@ -252,8 +319,8 @@ def generate_balanced_dataset(
 
     fill_attempts = 0
     max_fill_attempts = max(n_samples, 1) * max_attempts_per_sample
-    # Los déficits se rellenan dentro de la misma categoría para conservar
-    # exactamente PERSON_RATIO incluso cuando una familia se satura.
+    # FASE 3: redistribuir déficits. Nunca se cruza de people a objects (o al
+    # revés), por lo que PERSON_RATIO se conserva exactamente.
     for fill_category, target in category_targets.items():
         fill_rejections = Counter()
         active_category_strata = {
@@ -271,7 +338,7 @@ def generate_balanced_dataset(
         ):
             fill_attempts += 1
             # Elegir primero la familia menos representada y después su firma
-            # menos representada mantiene el balance durante redistribuciones.
+            # menos representada minimiza el sesgo introducido por saturación.
             family_totals = {
                 command_key: sum(
                     count
@@ -347,16 +414,20 @@ def generate_balanced_dataset(
             )
     print(f"Rechazos controlados: {dict(rejection_stats)}")
 
-    # Barajar para mezclar personas y objetos
+    # El orden de llenado estaba agrupado por estratos. Barajar evita bloques de
+    # una misma familia antes de crear el split train/eval en Nl-Cl.py.
     random.shuffle(dataset)
     return dataset
+
 
 def _generate_specific_command(generator, command_key, category):
     """
     Genera un comando específico forzando el tipo (command_key) y la categoría.
     Evita la selección aleatoria del comando principal.
     """
-    # Guardar método original
+    # CommandGenerator selecciona normalmente con pesos. Para llenar una cuota
+    # concreta sustituimos esa elección durante una sola llamada y restauramos
+    # siempre el método, incluso si hay una excepción.
     original_weighted_choice = generator._weighted_choice
 
     # Parche temporal para forzar el comando deseado
@@ -377,7 +448,10 @@ def _generate_specific_command(generator, command_key, category):
         # Restaurar método original
         generator._weighted_choice = original_weighted_choice
 
+
 def main():
+    """Ejecuta la generación completa y escribe el JSONL solo si todo es válido."""
+    # FASE A: cargar y comparar los catálogos antes de gastar tiempo generando.
     print("Cargando conocimiento desde:", DATA_DIR)
     knowledge = parse_data(DATA_DIR)
     # Las diferencias entre catálogos quedan visibles antes de crear ejemplos.
@@ -392,6 +466,7 @@ def main():
         f"Iniciando generación de {NUM_SAMPLES} comandos "
         f"(proporción personas={PERSON_RATIO})..."
     )
+    # FASE B: crear en memoria todas las muestras y sus metadatos.
     dataset = generate_balanced_dataset(
         generator,
         NUM_SAMPLES,
@@ -401,8 +476,8 @@ def main():
         max_attempts_per_sample=MAX_ATTEMPTS_PER_SAMPLE,
     )
 
-    # Se valida antes de escribir: un fallo no deja un JSONL parcial etiquetado
-    # como si fuera apto para entrenamiento.
+    # FASE C: auditoría global. CLIPS comprueba ejecutabilidad, no solamente que
+    # los strings tengan una sintaxis correcta.
     clips_validator = None
     try:
         clips_validator = ClipsPlanValidator(CLIPS_RULES_FILE)
@@ -421,7 +496,7 @@ def main():
     if report["totals"].get("clips_failed", 0):
         raise ValueError("Hay secuencias que CLIPS no puede planificar")
 
-    # Guardar como JSONL
+    # FASE D: persistencia. Es la primera operación que reemplaza OUTPUT_FILE.
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         for sample in dataset:
             f.write(json.dumps(sample, ensure_ascii=False) + "\n")
@@ -440,13 +515,13 @@ def main():
         pct = 100 * count / len(dataset)
         print(f"  {cat}: {count} ({pct:.1f}%)")
 
-if __name__ == "__main__":
-    # Elige el modo de ejecución
-    ENUMERATE_MODE = False   # Cambia a False para generar dataset aleatorio
 
-    knowledge = parse_data(DATA_DIR)
+if __name__ == "__main__":
+    # False: genera el dataset balanceado. True: exporta ejemplos enumerados
+    # para inspeccionar superficies y follow-ups sin aplicar cuotas aleatorias.
+    ENUMERATE_MODE = False   # False para generar dataset aleatorio
 
     if ENUMERATE_MODE:
-        enumerate_and_save(knowledge, output_file="all_command_variants.jsonl")
+        enumerate_and_save(output_file="all_command_variants.jsonl")
     else:
         main()

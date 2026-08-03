@@ -24,6 +24,8 @@ DEFAULT_JUSTINA_NAMES = _JUSTINA_WS / (
 
 @dataclass(frozen=True)
 class CatalogIssue:
+    """Problema estructurado que el generador puede imprimir o tratar como fatal."""
+
     severity: str
     code: str
     message: str
@@ -33,6 +35,7 @@ class CatalogIssue:
 
 
 def _normalized(value: str) -> str:
+    """Crea una identidad comparable sin depender de guiones bajos o mayúsculas."""
     return " ".join(value.replace("_", " ").casefold().split())
 
 
@@ -97,6 +100,7 @@ def validate_local_catalog(knowledge) -> list[CatalogIssue]:
 
 
 def load_yaml_patterns(path: str | Path) -> list[str]:
+    """Lee el formato ``patterns`` usado por los diccionarios de Justina."""
     with Path(path).open("r", encoding="utf-8") as stream:
         data = yaml.safe_load(stream) or {}
     patterns = data.get("patterns", [])
@@ -157,6 +161,7 @@ def validate_catalogs(
     knowledge,
     external_names_path: str | Path = DEFAULT_JUSTINA_NAMES,
 ) -> list[CatalogIssue]:
+    """Combina errores locales y advertencias de sincronización con Justina."""
     return [
         *validate_local_catalog(knowledge),
         *compare_name_catalogs(knowledge.names, external_names_path),
@@ -164,6 +169,7 @@ def validate_catalogs(
 
 
 def print_catalog_report(issues: Iterable[CatalogIssue]) -> None:
+    """Presenta el reporte antes de que comience la generación costosa."""
     issues = list(issues)
     if not issues:
         print("Catálogos: sin inconsistencias detectadas.")

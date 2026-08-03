@@ -1,3 +1,10 @@
+"""Carga CompetitionTemplate en una representación tipada para el generador.
+
+Este módulo solo analiza los Markdown; no normaliza silenciosamente nombres ni
+mezcla el catálogo externo de Justina. Las diferencias se reportan después en
+``catalog_validation.py`` para mantener trazabilidad sobre la fuente del dato.
+"""
+
 import re
 import warnings
 from dataclasses import dataclass
@@ -94,6 +101,7 @@ def _parse_rooms(data: str) -> list[str]:
 
 
 def _parse_objects(data: str):
+    """Extrae categorías y objetos preservando la escritura del archivo fuente."""
     class_blocks = re.split(r"# Class\s+", data)
     class_blocks = [b.strip() for b in class_blocks if b.strip()]
 
@@ -127,6 +135,7 @@ def _parse_objects(data: str):
 
 
 def parse_data(data_dir: str) -> Knowledge:
+    """Carga todos los catálogos requeridos desde ``data_dir``."""
     names = _parse_names(_read_data(f"{data_dir}/names/names.md"))
 
     locations, placement_locations, location_categories = _parse_locations(
@@ -150,11 +159,19 @@ def parse_data(data_dir: str) -> Knowledge:
     )
 
 if __name__ == '__main__':
-    import argparse 
-    parser = argparse.ArgumentParser() 
-    from robocupathome_generator.generator import dir_path 
-    parser.add_argument( "-d", "--data-dir", default=".", help="directory where the data is read from", type=dir_path, ) 
-    args = parser.parse_args() 
-    db = parse_data(args.data_dir) 
-    import pprint 
+    import argparse
+    import pprint
+
+    from robocupathome_generator.generator import dir_path
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-d",
+        "--data-dir",
+        default=".",
+        help="directory where the data is read from",
+        type=dir_path,
+    )
+    args = parser.parse_args()
+    db = parse_data(args.data_dir)
     pprint.pprint(db, width=120)

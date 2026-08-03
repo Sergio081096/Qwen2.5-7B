@@ -4,9 +4,20 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
+import os
 import time
 from pathlib import Path
+
+# Matplotlib necesita un directorio escribible incluso en equipos sin entorno
+# gráfico (servidores SSH, contenedores o la computadora remota con la GPU).
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 from command_normalizer import get_default_normalizer
 from dataset_evaluation import (
@@ -30,6 +41,7 @@ from inference import (
 
 
 DEFAULT_BENCHMARK = Path(__file__).with_name("model_evaluation_cases.jsonl")
+DEFAULT_PLOTS_DIR = Path("evaluation_plots")
 
 
 def load_benchmark(path, max_samples=0, families=None):
@@ -198,6 +210,7 @@ def case_details(rows, results):
                 "exact": strict_exact,
                 "casefold_exact": casefold_exact,
                 "case_only_difference": casefold_exact and not strict_exact,
+                "elapsed_ms": result.get("_elapsed_ms"),
                 "prediction_error": result.get("error"),
                 "raw": result.get("raw"),
             }
@@ -227,6 +240,197 @@ def print_case_details(details, show_all=False):
             print(f"Raw:         {detail['raw']}")
 
 
+def _save_figure(figure, path):
+    """Guarda y cierra una figura para no acumular memoria entre gráficas."""
+    figure.savefig(path, dpi=160, bbox_inches="tight")
+    plt.close(figure)
+
+
+def _plot_metric_overview(report, output_dir):
+    """Resume las métricas globales más importantes en una sola escala 0-100%."""
+    totals = report["totals"]
+    metrics = [
+        ("Exact estricto", totals.get("exact_accuracy", 0.0)),
+        ("Exact sin mayúsculas", totals.get("casefold_exact_accuracy", 0.0)),
+        ("Esquema válido", totals.get("schema_valid_rate", 0.0)),
+        ("Slots F1", report.get("slots", {}).get("f1", 0.0)),
+        ("Slots F1 canónico", report.get("casefold_slots", {}).get("f1", 0.0)),
+    ]
+    if "clips_planifiable_rate" in totals:
+        metrics.append(("Planificable CLIPS", totals["clips_planifiable_rate"]))
+    for kind in ("person", "object"):
+        if kind in report.get("entity_kinds", {}):
+            metrics.append(
+                (f"kind={kind}", report["entity_kinds"][kind].get("accuracy", 0.0))
+            )
+
+    labels, values = zip(*metrics)
+    figure, axis = plt.subplots(figsize=(11, 5.5))
+    bars = axis.bar(labels, values, color="#2878B5")
+    axis.set_ylim(0.0, 1.08)
+    axis.set_ylabel("Proporción")
+    axis.set_title("Resumen de calidad del parser semántico")
+    axis.grid(axis="y", alpha=0.25)
+    axis.tick_params(axis="x", rotation=30)
+    for bar, value in zip(bars, values):
+        axis.text(
+            bar.get_x() + bar.get_width() / 2,
+            min(value + 0.02, 1.055),
+            f"{value:.1%}",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+        )
+    path = output_dir / "metrics_overview.png"
+    _save_figure(figure, path)
+    return path
+
+
+def _plot_family_accuracy(report, output_dir):
+    """Compara exact match estricto y canónico para cada familia del benchmark."""
+    families = report.get("families", {})
+    ordered = sorted(
+        families,
+        key=lambda family: (
+            families[family].get("casefold_accuracy", 0.0),
+            families[family].get("accuracy", 0.0),
+            family,
+        ),
+    )
+    strict = [families[family].get("accuracy", 0.0) for family in ordered]
+    canonical = [families[family].get("casefold_accuracy", 0.0) for family in ordered]
+    positions = list(range(len(ordered)))
+    height = max(6.0, len(ordered) * 0.34)
+    figure, axis = plt.subplots(figsize=(12, height))
+    axis.barh(
+        [position - 0.18 for position in positions],
+        strict,
+        height=0.34,
+        label="Estricto",
+        color="#D95319",
+    )
+    axis.barh(
+        [position + 0.18 for position in positions],
+        canonical,
+        height=0.34,
+        label="Sin distinguir mayúsculas",
+        color="#2CA02C",
+    )
+    axis.set_yticks(positions, ordered)
+    axis.set_xlim(0.0, 1.05)
+    axis.set_xlabel("Exact match")
+    axis.set_title("Exact match por familia")
+    axis.grid(axis="x", alpha=0.25)
+    axis.legend(loc="lower right")
+    path = output_dir / "family_accuracy.png"
+    _save_figure(figure, path)
+    return path
+
+
+def _percentile(values, percentile):
+    """Percentil lineal sencillo; evita depender de NumPy para tres estadísticas."""
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    position = (len(ordered) - 1) * percentile
+    lower = int(position)
+    upper = min(lower + 1, len(ordered) - 1)
+    fraction = position - lower
+    return ordered[lower] * (1 - fraction) + ordered[upper] * fraction
+
+
+def _plot_outcomes_and_latency(report, details, output_dir):
+    """Muestra tipos de resultado y distribución de latencia por comando."""
+    totals = report["totals"]
+    strict = totals.get("exact", 0)
+    case_only = totals.get("case_only_differences", 0)
+    errors = totals.get("samples", 0) - strict - case_only
+    latencies = [
+        float(detail["elapsed_ms"])
+        for detail in details
+        if isinstance(detail.get("elapsed_ms"), (int, float))
+    ]
+
+    figure, axes = plt.subplots(1, 2, figsize=(12, 4.8))
+    outcome_labels = ["Exacto", "Solo mayúsculas", "Error semántico"]
+    outcome_values = [strict, case_only, errors]
+    bars = axes[0].bar(
+        outcome_labels,
+        outcome_values,
+        color=["#2CA02C", "#F0AD4E", "#D62728"],
+    )
+    axes[0].set_title("Resultados por caso")
+    axes[0].set_ylabel("Número de comandos")
+    axes[0].grid(axis="y", alpha=0.25)
+    axes[0].tick_params(axis="x", rotation=20)
+    for bar, value in zip(bars, outcome_values):
+        axes[0].text(
+            bar.get_x() + bar.get_width() / 2,
+            value + 0.15,
+            str(value),
+            ha="center",
+        )
+
+    if latencies:
+        axes[1].hist(latencies, bins=min(12, max(4, len(latencies) // 4)), color="#2878B5")
+        average = sum(latencies) / len(latencies)
+        p50 = _percentile(latencies, 0.50)
+        p95 = _percentile(latencies, 0.95)
+        axes[1].axvline(average, color="#D95319", linestyle="--", label=f"media {average:.0f} ms")
+        axes[1].axvline(p50, color="#2CA02C", linestyle=":", label=f"p50 {p50:.0f} ms")
+        axes[1].axvline(p95, color="#9467BD", linestyle="-.", label=f"p95 {p95:.0f} ms")
+        axes[1].legend()
+    else:
+        axes[1].text(0.5, 0.5, "Sin datos de latencia", ha="center", va="center")
+    axes[1].set_title("Latencia de inferencia")
+    axes[1].set_xlabel("Milisegundos por comando")
+    axes[1].set_ylabel("Frecuencia")
+    axes[1].grid(axis="y", alpha=0.25)
+
+    path = output_dir / "outcomes_and_latency.png"
+    _save_figure(figure, path)
+    return path
+
+
+def _write_case_csv(details, output_dir):
+    """Exporta una tabla fácil de ordenar en LibreOffice, pandas o R."""
+    path = output_dir / "case_results.csv"
+    fields = [
+        "id",
+        "family",
+        "exact",
+        "casefold_exact",
+        "case_only_difference",
+        "elapsed_ms",
+        "input",
+        "normalized_input",
+        "expected",
+        "predicted",
+        "prediction_error",
+    ]
+    with open(path, "w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        for detail in details:
+            row = {field: detail.get(field) for field in fields}
+            row["expected"] = json.dumps(detail["expected"], ensure_ascii=False)
+            row["predicted"] = json.dumps(detail["predicted"], ensure_ascii=False)
+            writer.writerow(row)
+    return path
+
+
+def create_evaluation_artifacts(report, details, output_dir=DEFAULT_PLOTS_DIR):
+    """Crea gráficas y CSV sin volver a ejecutar inferencia ni CLIPS."""
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return [
+        _plot_metric_overview(report, output_dir),
+        _plot_family_accuracy(report, output_dir),
+        _plot_outcomes_and_latency(report, details, output_dir),
+        _write_case_csv(details, output_dir),
+    ]
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("benchmark", nargs="?", default=str(DEFAULT_BENCHMARK))
@@ -240,6 +444,8 @@ def parse_args():
     )
     parser.add_argument("--show-all", action="store_true")
     parser.add_argument("--output-json", default="")
+    parser.add_argument("--plots-dir", default=str(DEFAULT_PLOTS_DIR))
+    parser.add_argument("--no-plots", action="store_true")
     parser.add_argument("--require-perfect", action="store_true")
     parser.add_argument(
         "--strict-case",
@@ -281,6 +487,7 @@ def main():
     results = []
     started = time.perf_counter()
     for index, row in enumerate(rows, start=1):
+        case_started = time.perf_counter()
         result = translate(
             row["input"],
             model,
@@ -288,6 +495,9 @@ def main():
             normalizer=normalizer,
             return_normalized=True,
         )
+        # Se guarda junto a la predicción para que las gráficas no tengan que
+        # ejecutar el modelo una segunda vez.
+        result["_elapsed_ms"] = (time.perf_counter() - case_started) * 1000.0
         results.append(result)
         print(f"\rInferencia {index}/{len(rows)}", end="", flush=True)
     elapsed = time.perf_counter() - started
@@ -308,6 +518,12 @@ def main():
         "seconds": elapsed,
         "samples_per_second": len(rows) / elapsed if elapsed else 0.0,
     }
+    if not args.no_plots:
+        artifacts = create_evaluation_artifacts(report, details, args.plots_dir)
+        report["artifacts"] = {"files": [str(path) for path in artifacts]}
+        print("Artefactos de evaluación:")
+        for path in artifacts:
+            print(f"  {path}")
     print_evaluation_report(report, "Evaluación semántica del benchmark")
 
     if args.output_json:
