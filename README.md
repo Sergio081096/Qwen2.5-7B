@@ -784,8 +784,234 @@ export QWEN_RESPONSE_FORMAT=goals
 
 Si servidor y ROS están en el mismo equipo, se recomienda `--host 127.0.0.1`.
 Si se usa `0.0.0.0`, debe configurarse clave, firewall y una red confiable. El
-servidor usa HTTP sin cifrado; no debe exponerse directamente a Internet sin
-VPN o un proxy con TLS.
+servidor no implementa TLS por sí mismo; no debe exponerse directamente a
+Internet. Dentro de Tailscale, el HTTP queda protegido por el túnel cifrado.
+
+### Acceso México-Extranjero por Internet con Tailscale
+
+Para operar el servidor desde otra ciudad o país se recomienda Tailscale. Solo
+se transporta la petición HTTP del parser; ROS 2, DDS y los demás servicios de
+Justina no se publican en Internet. Ambos equipos se conectan a la misma red
+privada de Tailscale, llamada *tailnet*, aunque estén detrás de NAT o firewalls.
+
+Tailscale asigna a cada equipo una dirección estable `100.x.y.z`. Con MagicDNS
+también se puede usar el nombre del equipo, por ejemplo `qwen-mexico`. Las
+conexiones directas y las retransmitidas permanecen cifradas de extremo a
+extremo con WireGuard; la diferencia entre ellas es principalmente latencia.
+El plan Personal actual es gratuito para uso personal y admite hasta seis
+usuarios y dispositivos de usuario ilimitados.
+
+Referencias oficiales:
+
+- [instalación de Tailscale en Linux](https://tailscale.com/docs/install/linux);
+- [quickstart y direcciones privadas](https://tailscale.com/kb/1017/install);
+- [MagicDNS y nombres de equipo](https://tailscale.com/docs/features/magicdns);
+- [tipos de conexión y cifrado](https://tailscale.com/docs/reference/connection-types);
+- [precios y límites actuales](https://tailscale.com/pricing).
+
+No se necesita configurar port forwarding en el router de México ni abrir
+`8008` hacia la IP pública. Tampoco debe activarse Tailscale Funnel: el endpoint
+de Qwen debe existir solamente dentro del tailnet.
+
+#### 1. Preparar la computadora con GPU en México
+
+Instalar Tailscale e iniciar sesión:
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
+
+El segundo comando muestra una URL de autenticación. Se debe iniciar sesión en
+el tailnet que también utilizará la computadora de Justina. Después se puede
+asignar un nombre estable y comprobar la conexión:
+
+```bash
+sudo tailscale set --hostname=qwen-mexico
+tailscale status
+tailscale ip -4
+```
+
+`tailscale ip -4` devuelve una dirección similar a `100.95.12.34`. Se usa la
+dirección real obtenida, no la del ejemplo.
+
+Crear una API key larga y guardarla en un administrador de contraseñas:
+
+```bash
+python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+export QWEN_API_KEY='clave'
+```
+
+Iniciar Qwen enlazado únicamente a la IP de Tailscale:
+
+```bash
+cd /home/$USER/Qwen2.5-7B
+export QWEN_TAILSCALE_IP="$(tailscale ip -4)"
+python3 server.py \
+  --host "$QWEN_TAILSCALE_IP" \
+  --port 8008 \
+  --adapter-path nl2cd_qwen7b \
+  --api-key "$QWEN_API_KEY"
+```
+
+La configuración normal de Tailscale permite tráfico del tailnet sin tocar el
+firewall. Si UFW ya está activo y bloquea el puerto, se puede permitir solamente
+la interfaz de Tailscale:
+
+```bash
+sudo ufw allow in on tailscale0 to any port 8008 proto tcp
+sudo ufw status verbose
+```
+
+No se debe habilitar UFW ni cambiar su política por SSH sin revisar primero las
+reglas existentes, porque podría perderse el acceso remoto. La guía oficial de
+[Tailscale con UFW](https://tailscale.com/docs/how-to/secure-ubuntu-server-with-ufw)
+explica el bloqueo completo de tráfico público.
+
+Para una computadora que debe permanecer disponible durante la competencia se
+puede deshabilitar la suspensión. Esto afecta globalmente al equipo:
+
+```bash
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+```
+
+Para revertirlo:
+
+```bash
+sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target
+```
+
+También debe comprobarse que la GPU esté disponible antes de dejar la máquina
+sin supervisión:
+
+```bash
+nvidia-smi
+sudo nvidia-smi -pm 1
+```
+
+El modo persistente de NVIDIA es opcional y depende del driver. Reduce el costo
+de reinicializar el driver, pero no conserva el modelo después de cerrar
+`server.py` o reiniciar la computadora. El proceso del servidor debe permanecer
+activo mediante una terminal estable, `tmux` o un servicio de `systemd` adaptado
+al entorno Python utilizado.
+
+Tailscale solicita reautenticación periódica. En un servidor confiable que no
+siempre tendrá una persona presente puede deshabilitarse **Key expiry** desde
+`Machines -> qwen-mexico -> Disable key expiry`. Esto evita una desconexión por
+expiración, pero aumenta el impacto de perder o comprometer ese equipo; la clave
+debe revocarse inmediatamente si ocurre. Véase la documentación de
+[key expiry](https://tailscale.com/docs/features/access-control/key-expiry).
+
+#### 2. Preparar la computadora de Justina en el extranjero
+
+Instalar Tailscale e iniciar sesión en el **mismo tailnet**:
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+sudo tailscale set --hostname=justina-corea
+tailscale status
+```
+
+Desde el extranjero, comprobar primero el túnel y después HTTP:
+
+```bash
+tailscale ping qwen-mexico
+curl http://qwen-mexico:8008/health
+```
+
+Si MagicDNS no está activo, se usa directamente la dirección `100.x.y.z` de la
+computadora de México:
+
+```bash
+tailscale ping 100.95.12.34
+curl http://100.95.12.34:8008/health
+```
+
+Comprobar una traducción real antes de iniciar ROS:
+
+```bash
+export QWEN_API_KEY='clave'
+curl -X POST http://qwen-mexico:8008/translate \
+  -H "Authorization: Bearer $QWEN_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"command":"bring me the apple from the kitchen"}'
+```
+
+Si `test_server.py` también está disponible en ese equipo, prueba `/health` y
+`/translate` en una sola ejecución:
+
+```bash
+python3 test_server.py \
+  "bring me the apple from the kitchen" \
+  --url http://qwen-mexico:8008 \
+  --api-key "$QWEN_API_KEY"
+```
+
+#### 3. Configurar el nodo semántico de Justina
+
+Antes de lanzar ROS se configuran el nombre MagicDNS, la misma API key y un
+timeout suficientemente amplio para una conexión internacional:
+
+```bash
+export QWEN_SERVER_URL=http://qwen-mexico:8008
+export QWEN_API_KEY='la-misma-clave-de-la-computadora-en-mexico'
+export QWEN_TIMEOUT_SEC=10
+export QWEN_RESPONSE_FORMAT=goals
+
+ros2 launch semantic_parser semantic_parser.launch.xml \
+  qwen_url:="$QWEN_SERVER_URL" \
+  qwen_api_key:="$QWEN_API_KEY" \
+  qwen_timeout_sec:="$QWEN_TIMEOUT_SEC" \
+  qwen_response_format:="$QWEN_RESPONSE_FORMAT"
+```
+
+El nodo `qwen_semantic_node.py` envía únicamente `{"command": "..."}` a
+`/translate`, recibe `normalized_input` y `prediction.goals`, y entrega los
+goals al resto de la planeación local. Una prueba completa del servicio ROS es:
+
+```bash
+ros2 service call \
+  /semantic_parser/semantic_parser \
+  semantic_parser_interfaces/srv/Parser \
+  "{command: 'bring me the apple from the kitchen'}"
+```
+
+#### 4. Diagnóstico por capas
+
+Las pruebas deben ejecutarse en este orden:
+
+1. `tailscale status` confirma que ambos equipos están conectados al tailnet;
+2. `tailscale ping qwen-mexico` confirma conectividad privada y muestra si la
+   ruta es `direct` o usa un relay;
+3. `curl http://qwen-mexico:8008/health` confirma red, firewall y proceso;
+4. `POST /translate` confirma API key, modelo, normalizador y adaptador;
+5. `ros2 service call` confirma el nodo y el contrato de ROS.
+
+Interpretación de fallos comunes:
+
+| Síntoma | Revisión recomendada |
+|---|---|
+| MagicDNS no resuelve | usar la IP `100.x.y.z` o habilitar MagicDNS en el panel DNS |
+| `tailscale ping` falla | verificar mismo tailnet, autorización del equipo y políticas de acceso |
+| `Connection refused` | confirmar que `server.py` sigue activo y escucha en la IP correcta |
+| HTTP `401` | las API keys de México y el extranjero no coinciden |
+| `/health` funciona pero `/translate` da `422` | revisar la salida inválida registrada por el modelo |
+| timeout desde ROS | probar `curl`, revisar GPU y aumentar `QWEN_TIMEOUT_SEC` a `60` |
+| conexión `relay` | funciona y sigue cifrada, pero puede agregar latencia frente a `direct` |
+
+Para ver la ruta actual y el proceso que escucha:
+
+```bash
+tailscale status
+tailscale ping qwen-mexico
+ss -ltnp 'sport = :8008'
+```
+
+La API key sigue siendo necesaria aunque Tailscale autentique los dispositivos.
+Como defensa adicional, las políticas de
+[control de acceso de Tailscale](https://tailscale.com/docs/features/access-control)
+pueden limitar qué usuario o equipo de Corea alcanza `qwen-mexico:8008`.
 
 ## 15. Resultados del entrenamiento actual de 40,000 muestras
 
