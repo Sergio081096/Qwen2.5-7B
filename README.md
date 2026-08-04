@@ -2,7 +2,7 @@
 
 Este documento describe el funcionamiento actual de `generate_dataset.py`, el
 contrato de sus etiquetas, las validaciones que se ejecutan antes de escribir
-el dataset y los pasos necesarios para entrenar con `Nl-Cl.py`.
+el dataset y los pasos necesarios para entrenar con `Nl-Cl.py` "Natural language - CLIPS".
 
 La arquitectura está diseñada para que una orden en lenguaje natural termine
 en una secuencia ejecutable por Justina:
@@ -106,7 +106,7 @@ Si `JUSTINA_WS` no está definido, se usa `~/Justina`.
 Ejemplo de configuración:
 
 ```bash
-export JUSTINA_WS=/home/sergio/Justina
+export JUSTINA_WS=/home/$USER/Justina
 ```
 
 ### Advertencias y errores de catálogo
@@ -575,7 +575,7 @@ entrenamiento debe generarse con el código actual.
 
 ### Usando `nl2cd_qwen7b`
 
-El entrenamiento anterior está respaldado en un archivo ZIP separado, por lo
+El entrenamiento anterior puede estar respaldado por ejemplo en un archivo ZIP separado, por lo
 que la carpeta habitual puede usarse directamente para el adaptador vigente:
 
 ```python
@@ -723,7 +723,7 @@ a la vez para evitar picos de VRAM en una única GPU.
 
 ```bash
 cd /home/$USER/Qwen2.5-7B
-export QWEN_API_KEY='cambie-esta-clave'
+export QWEN_API_KEY='clave'
 python server.py \
   --host 0.0.0.0 \
   --port 8008 \
