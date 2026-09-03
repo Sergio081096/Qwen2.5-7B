@@ -194,10 +194,10 @@ find(apple, kind=person, property=largest)
 
 Los demás goals tienen un tipo implícito:
 
-- `take`, `deliver`, `place` y `drop` operan sobre objetos;
+- `take`, `deliver` y `place`  operan sobre objetos;
 - `guide`, `follow` y `greet` operan sobre personas;
 - `go` opera sobre ubicaciones;
-- `tell`, `talk`, `save` y `answer_question` operan sobre información.
+- `tell`, `save` y `answer_question` operan sobre información.
 
 ### Slots admitidos
 
@@ -207,7 +207,6 @@ Los demás goals tienen un tipo implícito:
 | `count` | `kind`, `gesture`, `pose`, `wearing`, `property` |
 | `deliver` | `to` |
 | `place` | `at`, `on`, `in`, `to` |
-| `drop` | `at`, `on`, `in` |
 | `guide`, `follow` | `to` |
 
 `goal_schema.py` también valida dependencias. Por ejemplo, `place(apple, ...)`

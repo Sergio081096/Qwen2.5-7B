@@ -1,0 +1,97 @@
+{
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "executable",
+        "clarification",
+        "rejected"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "description": "Empty for executable plans; otherwise one concise clarification question or rejection reason."
+    },
+    "goals": {
+      "type": "array",
+      "description": "Normalized semantic goals corresponding to the Qwen-to-GoalParser stage; empty unless status is executable.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "start_note": {
+      "type": "string",
+      "enum": [
+        "GPSR_START",
+        ""
+      ]
+    },
+    "plan": {
+      "type": "array",
+      "description": "CLIPS-compatible ros-message facts sorted by step; empty unless status is executable.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "integer"
+          },
+          "robot": {
+            "type": "string",
+            "enum": [
+              "Justina"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "go_to",
+              "say",
+              "listen",
+              "find_person",
+              "find_pose",
+              "approach",
+              "focus",
+              "find_object",
+              "analyze_objects",
+              "analyze_person",
+              "take",
+              "find_space",
+              "drop",
+              "give"
+            ]
+          },
+          "params": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "step",
+          "robot",
+          "action",
+          "params"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "end_note": {
+      "type": "string",
+      "enum": [
+        "GPSR_DONE",
+        ""
+      ]
+    }
+  },
+  "required": [
+    "status",
+    "message",
+    "goals",
+    "start_note",
+    "plan",
+    "end_note"
+  ],
+  "additionalProperties": false
+}

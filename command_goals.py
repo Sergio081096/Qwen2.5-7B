@@ -145,7 +145,7 @@ class CommandGoalsMixin:
         return [
             f"go({room})",
             f"find(person, kind=person, gesture='{gesture}')",
-            f"talk('{info}')",
+            f"tell('{info}')",
         ]
 
     def _goals_followNameFromBeacToRoom(self, ctx):
@@ -369,7 +369,7 @@ class CommandGoalsMixin:
 
     def _goals_putObjInTrash(self, ctx):
         obj = ctx.get("current_obj", "it")
-        return [f"drop({obj}, in=trash)"]
+        return [f"place({obj}, in=trash)"]
 
     def _goals_deliverObjToMe(self, ctx):
         obj = ctx.get("current_obj", "it")
@@ -395,7 +395,7 @@ class CommandGoalsMixin:
 
     def _goals_talkInfo(self, ctx):
         info = ctx.get("talk")
-        return [f"talk('{info}')"]
+        return [f"tell('{info}')"]
 
     def _goals_followPrs(self, ctx):
         person = ctx.get("current_person", "person")
