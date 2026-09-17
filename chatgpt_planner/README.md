@@ -8,7 +8,7 @@ GPSR command -> semantic goals -> executor-compatible plan
 
 Files:
 
-- `system_prompt.md`: static English system prompt, version 1.0.
+- `system_prompt.md`: static English system prompt, version 1.1.
 - `response_schema.json`: strict JSON Schema for Structured Outputs.
 - `example_outputs.jsonl`: executable, clarification, and rejection examples.
 
@@ -83,3 +83,58 @@ for line in (base / "example_outputs.jsonl").read_text().splitlines():
 print("schema and examples: OK")
 PY
 ```
+
+## Nodo de pruebas por consola
+
+`planner_test_node.py` es un nodo independiente de pruebas en Python. Se ejecuta desde cualquier
+carpeta, usando los artefactos junto al script y `goal_schema.py` del repositorio.
+
+Desde `/home/sergio/qwen`:
+
+```bash
+python -m pip install -r chatgpt_planner/requirements.txt
+python chatgpt_planner/planner_test_node.py --validate-local
+python -m unittest chatgpt_planner.test_planner_test_node
+```
+
+La validación local no necesita clave ni SDK de OpenAI; solo `jsonschema`.
+Para probar el modelo, configura manualmente la clave y el modelo/snapshot:
+
+```bash
+read -rsp 'OpenAI API key: ' OPENAI_API_KEY
+export OPENAI_API_KEY
+export OPENAI_MODEL='gpt-5.6-terra'
+python chatgpt_planner/planner_test_node.py \
+  --command 'go to the kitchen, find an apple, take it, and put it on the table'
+```
+
+También acepta `--model`, `--max-output-tokens` y `--output ruta.jsonl`. No carga
+archivos `.env` automáticamente. No hay modelo predeterminado ni clave en código.
+Cada invocación hace una petición independiente, con timeout de 60 segundos y
+sin reintentos automáticos. Los registros se añaden a `runs/results.jsonl`
+(ignorado por Git) e incluyen comando, fecha UTC, hashes del prompt y esquema,
+parámetros, latencia, validación y respuesta completa con modelo y uso de tokens
+cuando la API los devuelve. También se registran respuestas incompletas, rechazos
+y errores. Código de salida: 0 válido, 1 fallo, 2 configuración/argumentos.
+
+La integración usa Responses API y `text.format` con JSON Schema estricto según
+la [documentación oficial de Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
+
+## Revisión de estructura y límites encontrados
+
+- La separación entre prompt, esquema y ejemplos es adecuada. Los tres ejemplos
+  pasan el esquema y las comprobaciones locales adicionales.
+- El esquema por sí solo permite estados incoherentes, parámetros vacíos y pasos
+  repetidos. El nodo añade comprobaciones de estado, marcadores, numeración,
+  anuncios, parámetro único, cierre y validación de goals mediante `goal_schema.py`.
+- No hay un comprobador completo de correspondencia comando/goals/acciones ni
+  simulación de precondiciones físicas. `valid=true` significa únicamente que
+  pasan las comprobaciones implementadas; no autoriza ejecución en el robot.
+- `shelf` y `cabinet` figuran como ubicaciones y soportes genéricos. La expansión
+  de place puede omitir navegación hacia ellos. Conviene definir prioridad
+  según la relación y el contexto antes de medir equivalencia con CLIPS.
+- place actualiza `location=D` incluso para soportes locales sin navegación.
+  Esto puede alterar decisiones posteriores de movimiento.
+- count admite atributos de persona, pero su expansión usa `count_person` sin
+  conservar esos filtros. La regla general de normalizar espacios también debe
+  distinguir identificadores de frases de `say`, cuyos ejemplos mantienen espacios.

@@ -505,7 +505,7 @@ def main():
         bf16=compute_dtype == torch.bfloat16,
         logging_steps=50,
         save_strategy="steps",
-        save_steps=500,
+        save_steps=250,
         eval_strategy="steps",
         eval_steps=250,
         # Trainer conserva/restituye el checkpoint con menor eval_loss. Para
