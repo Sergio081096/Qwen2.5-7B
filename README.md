@@ -592,6 +592,22 @@ no se pase `resume_from_checkpoint`. Al terminar, el adaptador y tokenizer
 nuevos se guardan en `nl2cd_qwen7b`; el ZIP conserva los pesos anteriores si se
 necesitan recuperar.
 
+Hay que distinguir la carpeta raíz de los checkpoints de entrenamiento:
+
+- `nl2cd_qwen7b/adapter_model.safetensors` es el adaptador seleccionado para
+  inferencia. Como `load_best_model_at_end=True`, `Trainer` restaura primero el
+  checkpoint con menor `eval_loss` y `trainer.save_model()` copia ese adaptador
+  seleccionado a la raíz.
+- `nl2cd_qwen7b/checkpoint-N/` contiene además el estado necesario para
+  reanudar una corrida desde ese paso, como el optimizador, scheduler y estado
+  de `Trainer`.
+- El checkpoint de mayor número representa el último paso ejecutado, pero no
+  necesariamente el mejor modelo.
+
+Por tanto, `inference.py` y `server.py` deben seguir cargando la raíz
+`nl2cd_qwen7b`. Una ruta `checkpoint-N` solo debe indicarse explícitamente para
+reanudar o comparar un checkpoint concreto.
+
 ### Inicio del entrenamiento
 
 Después de completar el checklist:
@@ -646,7 +662,7 @@ Los parámetros principales del experimento actual son:
 | learning rate | `1e-4` | paso inicial de los adaptadores LoRA |
 | LoRA `r / alpha / dropout` | `32 / 64 / 0.05` | capacidad y regularización |
 | `eval_steps` | 250 | frecuencia de evaluación |
-| `save_steps` | 500 | frecuencia de checkpoints |
+| `save_steps` | 250 | frecuencia de checkpoints |
 | scheduler | cosine, warmup 150 | descenso gradual del learning rate |
 
 Con 36,000 muestras de train, batch efectivo 8 y dos épocas se obtienen 9,000
@@ -662,13 +678,15 @@ metric_for_best_model="eval_loss"
 greater_is_better=False
 ```
 
-`eval_steps=250` y `save_steps=500` son compatibles porque los checkpoints
-guardados coinciden periódicamente con pasos de evaluación. `save_total_limit`
-conserva el mejor checkpoint aunque no sea el último.
+`eval_steps=250` y `save_steps=250` hacen que cada evaluación tenga un
+checkpoint candidato asociado. `save_total_limit=2` limita el espacio ocupado;
+en el entrenamiento vigente se conservaron el mejor checkpoint y el último.
 
-`trainer.save_model()` guarda el adaptador LoRA elegido y no duplica todos los
-pesos del Qwen base. El tokenizer sí se guarda en `nl2cd_qwen7b` para que
-entrenamiento, inferencia y servidor usen el mismo vocabulario y chat template.
+Después de `trainer.train()`, el modelo en memoria ya contiene los pesos del
+mejor checkpoint. `trainer.save_model()` guarda ese adaptador LoRA elegido en
+la raíz y no duplica todos los pesos del Qwen base. El tokenizer también se
+guarda en `nl2cd_qwen7b` para que entrenamiento, inferencia y servidor usen el
+mismo vocabulario y chat template.
 
 ## 13. Pruebas automatizadas
 
@@ -1012,46 +1030,56 @@ Como defensa adicional, las políticas de
 [control de acceso de Tailscale](https://tailscale.com/docs/features/access-control)
 pueden limitar qué usuario o equipo de Corea alcanza `qwen-mexico:8008`.
 
-## 15. Resultados del entrenamiento actual de 40,000 muestras
+## 15. Entrenamiento definitivo vigente de 40,000 muestras
 
-El adaptador vigente está en `nl2cd_qwen7b`. El experimento utilizó 36,000
-muestras para entrenamiento, 4,000 para validación, batch efectivo 8 y dos
-épocas.
+El adaptador vigente fue entrenado el 18 de septiembre de 2026 y está en
+`nl2cd_qwen7b`. El experimento utilizó 36,000 muestras para entrenamiento,
+4,000 para validación, batch efectivo 8 y dos épocas.
 
 | Resultado de entrenamiento | Valor |
 |---|---:|
 | pasos de optimización | 9,000 |
-| tiempo total | 27,513.4 s (7 h 38 min 33 s) |
-| muestras por segundo | 2.617 |
-| `train_loss` promedio | 0.2464565 |
-| `eval_loss` final | 0.2338212 |
-| mejor `eval_loss` observado | 0.2337805 (paso 7,500) |
+| tiempo total | 27,772.8 s (7 h 42 min 53 s) |
+| muestras por segundo | 2.592 |
+| `train_loss` promedio | 0.2415699 |
+| `eval_loss` del último paso | 0.2321626 |
+| mejor `eval_loss` observado | **0.2321400 (paso 5,000, época 1.11)** |
 
-La diferencia entre el mejor valor y el final es aproximadamente `0.000041`,
-por lo que la curva terminó esencialmente estable. Este entrenamiento terminó
-antes de activar `load_best_model_at_end`; los futuros entrenamientos con el
-código actual restaurarán automáticamente el checkpoint de menor `eval_loss`.
+La diferencia entre el mejor valor y el último es aproximadamente `0.000023`,
+por lo que la curva terminó esencialmente estable. En esta corrida
+`load_best_model_at_end=True` estuvo activo: el estado de `Trainer` identificó
+`nl2cd_qwen7b/checkpoint-5000` como el mejor y lo restauró antes de guardar y
+evaluar el adaptador.
+
+Al finalizar quedaron estos artefactos:
+
+| Ruta | Contenido y uso |
+|---|---|
+| `nl2cd_qwen7b/` | mejor adaptador y tokenizer; ruta oficial para inferencia |
+| `nl2cd_qwen7b/checkpoint-5000/` | mejor checkpoint completo; permite reanudar desde el paso 5,000 |
+| `nl2cd_qwen7b/checkpoint-9000/` | estado del último paso; no fue el seleccionado para inferencia |
+
+Se verificó que `nl2cd_qwen7b/adapter_model.safetensors` y el archivo homónimo
+de `checkpoint-5000` tienen el mismo SHA-256. El adaptador de la raíz es, por
+tanto, exactamente el mejor modelo restaurado y no el del paso 9,000.
 
 ![Curva de pérdida del entrenamiento de 40,000 muestras](loss_curve.png)
 
-El benchmark fijo de 48 comandos produjo:
+La evaluación integrada posterior al entrenamiento utilizó 50 muestras del
+holdout y se ejecutó sobre el mejor modelo restaurado:
 
 | Métrica | Resultado |
 |---|---:|
-| exact match estricto | 47/48 (97.92%) |
-| exact match canónico, sin distinguir mayúsculas | 48/48 (100%) |
-| F1 de slots estricto | 99.56% |
-| F1 de slots canónico | 100% |
-| `kind=object` | 17/17 (100%) |
+| exact match | 50/50 (100%) |
+| F1 de slots | 100% |
+| `kind=object` | 22/22 (100%) |
 | `kind=person` | 33/33 (100%) |
-| esquema válido | 48/48 (100%) |
-| planificable en CLIPS | 48/48 (100%) |
-| tiempo total / rendimiento | 88.17 s / 0.544 comandos por segundo |
+| esquema válido | 50/50 (100%) |
+| planificable en CLIPS | 50/50 (100%) |
 
-La única diferencia estricta fue `Water` frente a `water`. Como el normalizador
-lleva la entrada a minúsculas y conservó correctamente `kind=object`, no es un
-error semántico. Por eso se mantienen ambas métricas: la estricta detecta deriva
-de superficie y la canónica representa mejor si Justina recibirá el mismo plan.
+Esta muestra aleatoria cubrió 21 de las 29 familias. No sustituye al benchmark
+fijo de `model_evaluation_cases.jsonl`, que debe ejecutarse nuevamente antes de
+atribuir al adaptador vigente los resultados históricos de otro checkpoint.
 
 El archivo `adapter_model.safetensors` ocupa aproximadamente 323 MB. La carpeta
 completa puede ser mayor mientras conserve checkpoints intermedios; para

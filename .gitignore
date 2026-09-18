@@ -9,6 +9,7 @@
 # Python cache directories
 __pycache__/
 **/__pycache__/
+.pytest_cache/
 
 # Python virtual environments
 venv/
@@ -35,6 +36,7 @@ log/
 .vscode/
 **/.vscode/
 .codex/
+.agents/
 
 # JetBrains (PyCharm, etc.)
 .idea/
