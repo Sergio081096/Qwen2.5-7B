@@ -1032,9 +1032,7 @@ pueden limitar qué usuario o equipo de Corea alcanza `qwen-mexico:8008`.
 
 ## 15. Entrenamiento definitivo vigente de 40,000 muestras
 
-El adaptador vigente fue entrenado el 18 de septiembre de 2026 y está en
-`nl2cd_qwen7b`. El experimento utilizó 36,000 muestras para entrenamiento,
-4,000 para validación, batch efectivo 8 y dos épocas.
+El adaptador vigente está en `nl2cd_qwen7b`. El experimento utilizó 36,000 muestras para entrenamiento, 4,000 para validación, batch efectivo 8 y dos épocas.
 
 | Resultado de entrenamiento | Valor |
 |---|---:|
