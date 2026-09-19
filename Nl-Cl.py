@@ -27,8 +27,7 @@ from transformers import (
     TrainingArguments,
 )
 
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+from graficar_perdidas import graficar_perdidas
 
 from dataset_evaluation import (
     DEFAULT_CLIPS_RULES,
@@ -423,38 +422,18 @@ def evaluate_exact_match(model, tokenizer, raw_eval_dataset, max_samples=50):
 # 5. VISUALIZACION
 # =====================================================
 def plot_losses(trainer):
-    """Grafica el historial que Trainer conserva en ``state.log_history``.
-
-    La pérdida de entrenamiento se registra cada ``logging_steps`` y la de
-    validación cada ``eval_steps``; por eso no necesariamente tienen el mismo
-    número de puntos. La selección del mejor checkpoint usa directamente
-    ``eval_loss`` y no depende de esta imagen.
-    """
-    logs = trainer.state.log_history
-    train_steps, train_loss = [], []
-    eval_steps, eval_loss = [], []
-
-    for log in logs:
-        if "loss" in log and "step" in log:
-            train_steps.append(log["step"])
-            train_loss.append(log["loss"])
-        if "eval_loss" in log and "step" in log:
-            eval_steps.append(log["step"])
-            eval_loss.append(log["eval_loss"])
-
-    plt.figure(figsize=(10, 5.5))
-    if train_steps:
-        plt.plot(train_steps, train_loss, label="Train Loss")
-    if eval_steps:
-        plt.plot(eval_steps, eval_loss, label="Validation Loss")
-    plt.xlabel("Steps")
-    plt.ylabel("Loss")
-    plt.title("Training vs Validation Loss")
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(LOSS_CURVE_PATH, dpi=160)
-    plt.close()
+    """Grafica el historial completo y marca el checkpoint seleccionado por Trainer."""
+    estado = {
+        "log_history": trainer.state.log_history,
+        "best_model_checkpoint": trainer.state.best_model_checkpoint,
+    }
+    rutas = graficar_perdidas(
+        estado,
+        salida=Path(LOSS_CURVE_PATH).with_suffix(""),
+        desde=1000,
+    )
+    for ruta in rutas:
+        print(f"Curva de pérdida guardada en {ruta}")
 
 
 # =====================================================

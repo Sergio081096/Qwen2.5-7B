@@ -1061,7 +1061,7 @@ Se verificó que `nl2cd_qwen7b/adapter_model.safetensors` y el archivo homónimo
 de `checkpoint-5000` tienen el mismo SHA-256. El adaptador de la raíz es, por
 tanto, exactamente el mejor modelo restaurado y no el del paso 9,000.
 
-![Curva de pérdida del entrenamiento de 40,000 muestras](loss_curve.png)
+![Curva de pérdida del entrenamiento de 40,000 muestras](curva_perdida_qwen.png)
 
 La evaluación integrada posterior al entrenamiento utilizó 50 muestras del
 holdout y se ejecutó sobre el mejor modelo restaurado:
