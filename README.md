@@ -1,8 +1,178 @@
-# Generación y validación del dataset GPSR
+# Qwen–CLIPS para instrucciones GPSR
 
-Este documento describe el funcionamiento actual de `generate_dataset.py`, el
+Interpretación de órdenes con Qwen2.5-7B y comparación con el planificador GPT.
+Qwen devuelve objetivos canónicos por HTTP; los nodos de Justina convierten
+esos objetivos a hechos CLIPS y construyen el plan en su propio workspace.
+
+Este README reúne el flujo completo: construcción y validación del dataset,
+entrenamiento QLoRA, evaluación, inferencia HTTP e integración con Justina.
+Los comandos se ejecutan desde la raíz del repositorio salvo indicación expresa.
+
+## Contenido
+
+- [Organización](#organización)
+- [Comandos principales](#comandos-principales)
+- [Programas experimentales](#programas-experimentales)
+- [1. Archivos involucrados](#seccion-1)
+- [2. Fuentes de conocimiento](#seccion-2)
+- [3. Configuración principal](#seccion-3)
+- [4. Esquema canónico de goals](#seccion-4)
+- [5. Correcciones semánticas incorporadas](#seccion-5)
+- [6. Construcción de una muestra](#seccion-6)
+- [7. Deduplicación, balanceo y reintentos](#seccion-7)
+- [8. Validación con CLIPS](#seccion-8)
+- [9. Cómo generar el dataset](#seccion-9)
+- [10. Auditar un dataset sin entrenar](#seccion-10)
+- [11. Métricas utilizadas durante el entrenamiento](#seccion-11)
+- [12. Preparación para entrenar con qwen_gpsr/training/train.py](#seccion-12)
+- [13. Pruebas automatizadas](#seccion-13)
+- [14. Inferencia remota con server.py](#seccion-14)
+- [15. Entrenamiento definitivo vigente de 40,000 muestras](#seccion-15)
+- [Documentación complementaria](#documentación-complementaria)
+
+## Organización
+
+```text
+qwen_gpsr/                  Código Python del sistema Qwen
+├── domain/                 Catálogos, normalizador y contrato de goals
+├── generation/             Plantillas y generación del dataset
+├── training/               Entrenamiento QLoRA y curvas de pérdida
+├── runtime/                Inferencia y servidor HTTP
+├── evaluation/             Métricas, evaluación y auditoría de coincidencias
+├── tools/                  Cliente de comprobación HTTP
+└── paths.py                Rutas de datos, modelos y resultados
+chatgpt_planner/            Planificador GPT, prompt, esquema y ejemplos
+experiments/               Campañas GPT y Qwen–CLIPS, registros y evaluación
+data/
+├── CompetitionTemplate/    Catálogos originales del dominio
+├── datasets/               Dataset de entrenamiento y variantes
+├── benchmarks/             Benchmark del modelo
+└── development/            Entradas y referencias del piloto de 60 casos
+tests/                     Pruebas automatizadas
+docs/
+└── experiment/            Guía y cuaderno del experimento
+reports/
+├── evaluation/            Resultados de evaluación y auditorías
+├── figures/               Gráficas
+└── training/              Registros de entrenamiento
+models/                    Adaptadores y checkpoints locales (ignorados por Git)
+archives/                  Respaldos ZIP locales (ignorados por Git)
+legacy/                    Prototipos de referencia
+server.py                  Entrada del servidor HTTP
+```
+
+`server.py`, en la raíz, es la entrada del servidor. Su implementación está en
+`qwen_gpsr/runtime/server.py`. El adaptador, tokenizer y checkpoints se almacenan
+en `models/nl2cd_qwen7b/`.
+
+Las importaciones usan el nombre completo del paquete:
+
+```python
+from qwen_gpsr.domain.goal_schema import parse_goal
+```
+
+Los módulos se ejecutan con `python3 -m` desde la raíz del repositorio, usando
+el entorno Python que contiene las dependencias del proyecto. Desde otra
+carpeta se proporciona la ruta del repositorio mediante `PYTHONPATH`, o se
+utiliza la ruta absoluta de la entrada del servidor:
+
+```bash
+PYTHONPATH=/home/sergio/Qwen2.5-7B python3 -m qwen_gpsr.evaluation.evaluate_dataset
+python3 /home/sergio/Qwen2.5-7B/server.py --help
+```
+
+Las rutas relativas suministradas como argumentos se resuelven desde el
+directorio de trabajo. Las rutas predeterminadas se definen en
+`qwen_gpsr/paths.py` respecto de la raíz del repositorio.
+
+## Comandos principales
+
+Iniciar el servidor:
+
+```bash
+python3 server.py --host 127.0.0.1 --port 8008
+# Entrada equivalente:
+python3 -m qwen_gpsr.runtime.server --host 127.0.0.1 --port 8008
+```
+
+El adaptador predeterminado es `models/nl2cd_qwen7b`. El servidor ofrece
+los endpoints HTTP `/health` y `/translate` para los clientes ROS.
+
+```bash
+# Inferencia local
+python3 -m qwen_gpsr.runtime.inference
+
+# Cliente HTTP
+python3 -m qwen_gpsr.tools.check_server \
+  "go to the kitchen and find Robin" --url http://127.0.0.1:8008
+
+# Auditar el dataset existente
+python3 -m qwen_gpsr.evaluation.evaluate_dataset
+
+# Evaluar el modelo
+python3 -m qwen_gpsr.evaluation.evaluate_model
+
+# Validar el planificador GPT sin llamadas a la API
+python3 chatgpt_planner/planner_test_node.py --validate-local
+
+# Pruebas automáticas
+python3 -m unittest discover -s tests -v
+```
+
+Generación y entrenamiento escriben el dataset y adaptador configurados:
+
+```bash
+python3 -m qwen_gpsr.generation.generate_dataset
+python3 -m qwen_gpsr.training.train
+```
+
+Auditoría de las entradas del piloto; se elige un nombre de salida nuevo para
+conservar los informes históricos:
+
+```bash
+python3 -m qwen_gpsr.evaluation.auditar_coincidencias \
+  data/development/desarrollo_60_entradas.jsonl \
+  data/datasets/dataset_gpsr.jsonl \
+  --normalizador qwen_gpsr.domain.command_normalizer:normalize_command \
+  --salida reports/evaluation/auditoria_desarrollo_actual.json
+```
+
+Las reglas CLIPS se buscan en `$JUSTINA_WS` o, si no está definido, en
+`~/Justina`. Los nodos ROS y las reglas de planificación residen en ese workspace.
+
+## Programas experimentales
+
+El paquete `experiments` permite ejecutar el experimento sin iniciar ROS ni
+conectar el robot. GPT directo recibe la orden y devuelve objetivos y plan;
+Qwen–CLIPS consulta `server.py` por HTTP y expande los objetivos con CLIPS local.
+Incluye el control de objetivos de referencia, campañas con repeticiones,
+registros JSONL, límites de tiempo, reanudación y evaluación posterior. Admite
+Qwen2.5-3B–CLIPS y Qwen2.5-7B–CLIPS como condiciones separadas junto a GPT directo.
+Mide CPU, RAM y memoria GPU de Qwen con alcance explícito; los recursos internos
+de GPT aparecen como «no disponibles», separados del consumo del cliente.
+
+```bash
+python3 -m experiments.run_gpt --help
+python3 -m experiments.run_qwen_clips --help
+python3 -m experiments --help
+```
+
+La [guía de los programas experimentales](experiments/README.md) explica cómo
+preparar las campañas, configurar las claves y el modelo GPT, ejecutar las
+condiciones y revisar los resultados. Qwen expone `/metadata` para comprobar la
+configuración efectiva que atendió las consultas. Tras un timeout, `/status` debe
+confirmar que la solicitud terminó y el servidor está libre; de lo contrario la
+campaña se detiene y vuelve a comprobarlo al reanudar. El resumen principal usa
+el primer intento de cada repetición y presenta los reintentos por separado.
+Los controles sin referencia aprobada o aplicable se cuentan como no sometidos.
+La validez del formato y la terminación del plan se registran separadas de la
+corrección semántica.
+
+## Funcionamiento del sistema
+
+Este documento describe el funcionamiento actual de `qwen_gpsr/generation/generate_dataset.py`, el
 contrato de sus etiquetas, las validaciones que se ejecutan antes de escribir
-el dataset y los pasos necesarios para entrenar con `Nl-Cl.py` "Natural language - CLIPS".
+el dataset y los pasos necesarios para entrenar con `qwen_gpsr/training/train.py` "Natural language - CLIPS".
 
 La arquitectura está diseñada para que una orden en lenguaje natural termine
 en una secuencia ejecutable por Justina:
@@ -20,69 +190,73 @@ deduplicación, balanceo y reintentos
         ↓
 validación con goals_planning.clp
         ↓
-dataset_gpsr.jsonl
+data/datasets/dataset_gpsr.jsonl
         ↓
-Nl-Cl.py → adaptador QLoRA
+qwen_gpsr/training/train.py → adaptador QLoRA
         ↓
-inference.py / server.py
+qwen_gpsr/runtime/inference.py / server.py
         ↓
 qwen_semantic_node.py
         ↓
 goals_to_clips_node.py → goals_planning.clp → plan de Justina
 ```
 
+<a id="seccion-1"></a>
+
 ## 1. Archivos involucrados
 
 ### Generación
 
-- `generate_dataset.py`: coordina balanceo, deduplicación, reintentos,
+- `qwen_gpsr/generation/generate_dataset.py`: coordina balanceo, deduplicación, reintentos,
   validación y escritura del JSONL.
-- `gpsr_commands.py`: selecciona una familia de comando, resuelve plantillas y
+- `qwen_gpsr/generation/gpsr_commands.py`: selecciona una familia de comando, resuelve plantillas y
   conserva el contexto de entidades.
-- `command_constants.py`: contiene tres realizaciones superficiales por
+- `qwen_gpsr/domain/command_constants.py`: contiene tres realizaciones superficiales por
   familia, verbos, preposiciones, restricciones de slots y catálogos de
   familias de personas y objetos.
-- `command_utils.py`: sustituye placeholders, elige follow-ups y propaga el
+- `qwen_gpsr/generation/command_utils.py`: sustituye placeholders, elige follow-ups y propaga el
   contexto entre acciones relacionadas.
-- `command_goals.py`: convierte el contexto de una frase en la etiqueta
+- `qwen_gpsr/generation/command_goals.py`: convierte el contexto de una frase en la etiqueta
   semántica `goals`.
-- `knowledge.py`: carga nombres, objetos, categorías y ubicaciones desde
+- `qwen_gpsr/domain/knowledge.py`: carga nombres, objetos, categorías y ubicaciones desde
   `CompetitionTemplate`.
 
 ### Validación y evaluación
 
-- `goal_schema.py`: define la gramática canónica de goals y valida tipos, slots
+- `qwen_gpsr/domain/goal_schema.py`: define la gramática canónica de goals y valida tipos, slots
   y dependencias entre acciones.
-- `catalog_validation.py`: detecta duplicados, colisiones y diferencias entre
+- `qwen_gpsr/domain/catalog_validation.py`: detecta duplicados, colisiones y diferencias entre
   CompetitionTemplate y el catálogo de nombres de Justina.
-- `dataset_evaluation.py`: calcula cobertura por familia, tipos y slots, y
+- `qwen_gpsr/evaluation/dataset_evaluation.py`: calcula cobertura por familia, tipos y slots, y
   ejecuta las reglas CLIPS mediante `clipspy`.
-- `evaluate_dataset.py`: permite auditar un JSONL ya generado sin entrenar.
-- `evaluate_model.py`: ejecuta un benchmark fijo, mide exactitud semántica,
+- `qwen_gpsr/evaluation/evaluate_dataset.py`: permite auditar un JSONL ya generado sin entrenar.
+- `qwen_gpsr/evaluation/evaluate_model.py`: ejecuta un benchmark fijo, mide exactitud semántica,
   planificabilidad y latencia, y crea gráficas y un CSV por caso.
-- `model_evaluation_cases.jsonl`: benchmark curado que permite comparar
+- `data/benchmarks/model_evaluation_cases.jsonl`: benchmark curado que permite comparar
   entrenamientos sin depender de una muestra aleatoria.
-- `test_dataset_quality.py`: contiene pruebas unitarias del contrato y de una
+- `tests/test_dataset_quality.py`: contiene pruebas unitarias del contrato y de una
   generación acotada.
 
 ### Entrenamiento e inferencia
 
-- `Nl-Cl.py`: carga el JSONL, valida cada fila y entrena el adaptador QLoRA.
-- `inference.py`: carga el adaptador y rechaza predicciones que no cumplan el
+- `qwen_gpsr/training/train.py`: carga el JSONL, valida cada fila y entrena el adaptador QLoRA.
+- `qwen_gpsr/runtime/inference.py`: carga el adaptador y rechaza predicciones que no cumplan el
   esquema canónico.
 - `server.py`: mantiene el modelo cargado y expone la inferencia mediante HTTP
   para ejecutarla en otra computadora.
-- `test_server.py`: verifica `/health` y `/translate` sin depender de ROS.
+- `qwen_gpsr/tools/check_server.py`: verifica `/health` y `/translate` sin depender de ROS.
+
+<a id="seccion-2"></a>
 
 ## 2. Fuentes de conocimiento
 
 `knowledge.parse_data()` carga los siguientes archivos:
 
 ```text
-CompetitionTemplate/names/names.md
-CompetitionTemplate/maps/location_names.md
-CompetitionTemplate/maps/room_names.md
-CompetitionTemplate/objects/objects.md
+data/CompetitionTemplate/names/names.md
+data/CompetitionTemplate/maps/location_names.md
+data/CompetitionTemplate/maps/room_names.md
+data/CompetitionTemplate/objects/objects.md
 ```
 
 De ellos se obtienen:
@@ -94,7 +268,7 @@ De ellos se obtienen:
 - ubicaciones y superficies válidas para colocar objetos.
 
 La generación usa CompetitionTemplate como fuente principal. Como protección
-contra deriva entre repositorios, `catalog_validation.py` compara también los
+contra deriva entre repositorios, `qwen_gpsr/domain/catalog_validation.py` compara también los
 nombres con:
 
 ```text
@@ -123,16 +297,18 @@ Los errores sí detienen la generación. Actualmente se consideran errores:
 La capitalización nunca debe usarse para decidir el tipo de una entidad. Por
 ejemplo, `Water` es un objeto aunque empiece con mayúscula.
 
+<a id="seccion-3"></a>
+
 ## 3. Configuración principal
 
-Las constantes al inicio de `generate_dataset.py` controlan la ejecución:
+Las constantes al inicio de `qwen_gpsr/generation/generate_dataset.py` controlan la ejecución:
 
 ```python
-DATA_DIR = "./CompetitionTemplate"
+DATA_DIR = str(CATALOG_DIR)
 NUM_SAMPLES = 40000
 PERSON_RATIO = 0.5
 RANDOM_SEED = 42
-OUTPUT_FILE = "dataset_gpsr.jsonl"
+OUTPUT_FILE = "data/datasets/dataset_gpsr.jsonl"
 DEDUPLICATE = True
 MAX_ATTEMPTS_PER_SAMPLE = 50
 CLIPS_VALIDATION_SAMPLES = 200
@@ -146,6 +322,8 @@ CLIPS_VALIDATION_SAMPLES = 200
 - `MAX_ATTEMPTS_PER_SAMPLE`: controla cuándo una familia se considera saturada.
 - `CLIPS_VALIDATION_SAMPLES`: cantidad de secuencias que se ejecutan contra
   CLIPS antes de guardar. El valor `0` valida todas.
+
+<a id="seccion-4"></a>
 
 ## 4. Esquema canónico de goals
 
@@ -209,7 +387,7 @@ Los demás goals tienen un tipo implícito:
 | `place` | `at`, `on`, `in`, `to` |
 | `guide`, `follow` | `to` |
 
-`goal_schema.py` también valida dependencias. Por ejemplo, `place(apple, ...)`
+`qwen_gpsr/domain/goal_schema.py` también valida dependencias. Por ejemplo, `place(apple, ...)`
 o `deliver(apple, ...)` requieren un `take(apple)` anterior.
 
 También rechaza navegación o transporte redundante, por ejemplo:
@@ -218,6 +396,8 @@ También rechaza navegación o transporte redundante, por ejemplo:
 go(entrance) -> go(entrance)
 go(sofa) -> find(Robin) -> guide(Robin, to=sofa)
 ```
+
+<a id="seccion-5"></a>
 
 ## 5. Correcciones semánticas incorporadas
 
@@ -273,13 +453,15 @@ find Robin” de `meetNameAtLocThenFindInRm`, cuya firma correcta es
 ### Superficie separada de la semántica
 
 `TEMPLATE_VARIANTS` contiene tres estructuras sintácticas por familia. Los
-generadores de `command_goals.py` continúan siendo la única fuente de la
+generadores de `qwen_gpsr/generation/command_goals.py` continúan siendo la única fuente de la
 semántica. `validate_template_variants()` comprueba al iniciar que todas las
 paráfrasis de una familia conserven los mismos slots de contenido.
 
+<a id="seccion-6"></a>
+
 ## 6. Construcción de una muestra
 
-`generate_dataset.py` separa deliberadamente la coordinación de la generación
+`qwen_gpsr/generation/generate_dataset.py` separa deliberadamente la coordinación de la generación
 lingüística. Su flujo principal es:
 
 ```text
@@ -302,8 +484,8 @@ main
 
 La separación tiene dos ventajas prácticas:
 
-- `command_constants.py` controla cómo puede sonar una intención;
-- `command_goals.py` controla qué significa, independientemente de la variante
+- `qwen_gpsr/domain/command_constants.py` controla cómo puede sonar una intención;
+- `qwen_gpsr/generation/command_goals.py` controla qué significa, independientemente de la variante
   superficial que se haya elegido.
 
 Para cada estrato `(category, family, goal_signature)`, el generador:
@@ -311,7 +493,7 @@ Para cada estrato `(category, family, goal_signature)`, el generador:
 1. fuerza temporalmente la selección de la familia solicitada;
 2. resuelve follow-ups y placeholders;
 3. genera el texto natural y sus goals;
-4. valida los goals con `goal_schema.py`;
+4. valida los goals con `qwen_gpsr/domain/goal_schema.py`;
 5. construye metadatos de auditoría;
 6. normaliza el input para detectar duplicados;
 7. acepta la muestra o vuelve a intentar.
@@ -337,7 +519,7 @@ Ejemplo de salida:
 }
 ```
 
-Los metadatos sirven para medir el dataset y el modelo. `Nl-Cl.py` no los
+Los metadatos sirven para medir el dataset y el modelo. `qwen_gpsr/training/train.py` no los
 incluye en la respuesta aprendida; el target del modelo sigue siendo solamente:
 
 ```json
@@ -348,21 +530,23 @@ incluye en la respuesta aprendida; el target del modelo sigue siendo solamente:
 
 Para añadir solamente otra forma de decir una intención existente, se agrega
 una plantilla a `TEMPLATE_VARIANTS` y se conserva el mismo conjunto de
-placeholders semánticos. No se debe tocar `command_goals.py`.
+placeholders semánticos. No se debe tocar `qwen_gpsr/generation/command_goals.py`.
 
 Para crear una familia con semántica nueva se requiere:
 
-1. declarar sus variantes superficiales en `command_constants.py`;
+1. declarar sus variantes superficiales en `qwen_gpsr/domain/command_constants.py`;
 2. añadirla a `PERSON_CMD_LIST` u `OBJECT_CMD_LIST`;
 3. implementar el método homónimo en `CommandGoalsMixin`;
 4. registrarlo en `CommandGenerator.goal_generators`;
-5. verificar su firma y dependencias con `goal_schema.py`;
-6. añadir un caso estable a `model_evaluation_cases.jsonl`;
+5. verificar su firma y dependencias con `qwen_gpsr/domain/goal_schema.py`;
+6. añadir un caso estable a `data/benchmarks/model_evaluation_cases.jsonl`;
 7. comprobar que la secuencia resulte planificable en `goals_planning.clp`.
 
 El nombre de la familia conecta la plantilla con el método del parser. Un typo
 o una familia registrada sin método debe fallar durante la validación, no
 producir una etiqueta parcial.
+
+<a id="seccion-7"></a>
 
 ## 7. Deduplicación, balanceo y reintentos
 
@@ -393,6 +577,8 @@ La redistribución mantiene simultáneamente:
 
 Si no existe suficiente espacio de combinaciones únicas, la ejecución termina
 con error en lugar de escribir silenciosamente un dataset incompleto.
+
+<a id="seccion-8"></a>
 
 ## 8. Validación con CLIPS
 
@@ -425,6 +611,8 @@ Este mensaje procede del binding de CLIPS al destruir el entorno. No significa
 que una secuencia haya fallado si el reporte indica `clips_planifiable` y
 `GPSR_DONE`.
 
+<a id="seccion-9"></a>
+
 ## 9. Cómo generar el dataset
 
 Desde este directorio:
@@ -432,7 +620,7 @@ Desde este directorio:
 ```bash
 cd /home/$USER/Qwen2.5-7B
 export JUSTINA_WS=/home/$USER/Justina
-python generate_dataset.py
+python3 -m qwen_gpsr.generation.generate_dataset
 ```
 
 La secuencia es:
@@ -442,22 +630,24 @@ La secuencia es:
 3. generar y deduplicar;
 4. validar esquema y CLIPS;
 5. imprimir estadísticas;
-6. escribir `dataset_gpsr.jsonl`.
+6. escribir `data/datasets/dataset_gpsr.jsonl`.
 
 El archivo se escribe solamente después de superar las validaciones.
+
+<a id="seccion-10"></a>
 
 ## 10. Auditar un dataset sin entrenar
 
 Para revisar todo el archivo y ejecutar CLIPS sobre 200 muestras:
 
 ```bash
-python evaluate_dataset.py dataset_gpsr.jsonl --clips-samples 200
+python3 -m qwen_gpsr.evaluation.evaluate_dataset data/datasets/dataset_gpsr.jsonl --clips-samples 200
 ```
 
 Para una comprobación rápida de las primeras 500 filas:
 
 ```bash
-python evaluate_dataset.py dataset_gpsr.jsonl \
+python3 -m qwen_gpsr.evaluation.evaluate_dataset data/datasets/dataset_gpsr.jsonl \
   --max-samples 500 \
   --clips-samples 100
 ```
@@ -465,15 +655,17 @@ python evaluate_dataset.py dataset_gpsr.jsonl \
 Para revisar solo esquema, familias, tipos y slots:
 
 ```bash
-python evaluate_dataset.py dataset_gpsr.jsonl --no-clips
+python3 -m qwen_gpsr.evaluation.evaluate_dataset data/datasets/dataset_gpsr.jsonl --no-clips
 ```
 
 El comando termina con código distinto de cero si encuentra etiquetas inválidas
 o secuencias que CLIPS no puede planificar.
 
+<a id="seccion-11"></a>
+
 ## 11. Métricas utilizadas durante el entrenamiento
 
-Después de entrenar, `Nl-Cl.py` evalúa:
+Después de entrenar, `qwen_gpsr/training/train.py` evalúa:
 
 - exact match global;
 - exact match por `family`;
@@ -488,8 +680,8 @@ propiedad; las métricas por slots muestran esas diferencias.
 
 ### Benchmark reproducible del adaptador
 
-`evaluate_model.py` carga el adaptador y ejecuta los casos curados de
-`model_evaluation_cases.jsonl`. El benchmark cubre las 29 familias, las nuevas
+`qwen_gpsr/evaluation/evaluate_model.py` carga el adaptador y ejecuta los casos curados de
+`data/benchmarks/model_evaluation_cases.jsonl`. El benchmark cubre las 29 familias, las nuevas
 firmas `go -> find`, paráfrasis, pronombres, ruido ASR y un objeto con
 mayúscula. A diferencia de la prueba aleatoria al final del entrenamiento, los
 casos permanecen fijos y permiten comparar dos checkpoints justamente.
@@ -497,7 +689,7 @@ casos permanecen fijos y permiten comparar dos checkpoints justamente.
 Evaluar el adaptador final y mostrar solamente errores:
 
 ```bash
-python evaluate_model.py --output-json evaluation_final.json
+python3 -m qwen_gpsr.evaluation.evaluate_model --output-json evaluation_final.json
 ```
 
 La misma ejecución crea por defecto el directorio `evaluation_plots/`:
@@ -516,21 +708,21 @@ necesita una evaluación sin archivos gráficos, se pasa `--no-plots`.
 Mostrar todos los casos, incluidos los correctos:
 
 ```bash
-python evaluate_model.py --show-all
+python3 -m qwen_gpsr.evaluation.evaluate_model --show-all
 ```
 
 Evaluar una familia específica:
 
 ```bash
-python evaluate_model.py --family findNameInRoom --show-all
+python3 -m qwen_gpsr.evaluation.evaluate_model --family findNameInRoom --show-all
 ```
 
 Comparar un checkpoint y guardar su reporte:
 
 ```bash
-python evaluate_model.py \
-  --adapter-path nl2cd_qwen7b/checkpoint-8500 \
-  --output-json evaluation_checkpoint_8500.json
+python3 -m qwen_gpsr.evaluation.evaluate_model \
+  --adapter-path models/nl2cd_qwen7b/checkpoint-8500 \
+  --output-json reports/evaluation/evaluation_checkpoint_8500.json
 ```
 
 Las métricas incluyen exact match global y por familia, validez del esquema,
@@ -544,7 +736,7 @@ auditar la consistencia del catálogo.
 mayúsculas. Para exigir también capitalización idéntica:
 
 ```bash
-python evaluate_model.py --require-perfect --strict-case
+python3 -m qwen_gpsr.evaluation.evaluate_model --require-perfect --strict-case
 ```
 
 Esto permite usar el benchmark como prueba de regresión sin penalizar la
@@ -555,57 +747,59 @@ kind=object)` y `find(water, kind=person)` continúan siendo diferentes. Solo
 acepta que el normalizador convierta la superficie a minúsculas mientras
 mantiene exactamente la estructura, el orden, los valores y los slots.
 
-## 12. Preparación para entrenar con `Nl-Cl.py`
+<a id="seccion-12"></a>
+
+## 12. Preparación para entrenar con `qwen_gpsr/training/train.py`
 
 ### Estado del dataset actual
 
-El `dataset_gpsr.jsonl` incluye las nuevas superficies y familias. Para el
+El `data/datasets/dataset_gpsr.jsonl` incluye las nuevas superficies y familias. Para el
 entrenamiento debe generarse con el código actual.
 
 ### Checklist obligatorio
 
 1. Respaldar el dataset anterior si se desea conservar.
-2. Ejecutar `python generate_dataset.py`.
+2. Ejecutar `python3 -m qwen_gpsr.generation.generate_dataset`.
 3. Confirmar que el reporte indique cero etiquetas inválidas.
 4. Confirmar que las muestras CLIPS sean planificables.
-5. Ejecutar opcionalmente `evaluate_dataset.py` sobre el archivo final.
-6. Confirmar que el adaptador `nl2cd_qwen7b` anterior esté respaldado.
-7. Iniciar `python Nl-Cl.py` usando nuevamente `nl2cd_qwen7b`.
+5. Ejecutar opcionalmente `qwen_gpsr/evaluation/evaluate_dataset.py` sobre el archivo final.
+6. Confirmar que el adaptador `models/nl2cd_qwen7b` anterior esté respaldado.
+7. Iniciar `python3 -m qwen_gpsr.training.train` usando nuevamente `models/nl2cd_qwen7b`.
 
-### Usando `nl2cd_qwen7b`
+### Usando `models/nl2cd_qwen7b`
 
 El entrenamiento anterior puede estar respaldado por ejemplo en un archivo ZIP separado, por lo
 que la carpeta habitual puede usarse directamente para el adaptador vigente:
 
 ```python
-OUTPUT_DIR = "nl2cd_qwen7b"
+OUTPUT_DIR = str(MODEL_DIR)
 ```
 
-`inference.py` carga exactamente esa misma carpeta:
+`qwen_gpsr/runtime/inference.py` carga exactamente esa misma carpeta:
 
 ```python
-ADAPTER_PATH = "nl2cd_qwen7b"
+ADAPTER_PATH = str(MODEL_DIR)
 ```
 
 `Trainer.train()` no reanuda automáticamente un checkpoint anterior mientras
 no se pase `resume_from_checkpoint`. Al terminar, el adaptador y tokenizer
-nuevos se guardan en `nl2cd_qwen7b`; el ZIP conserva los pesos anteriores si se
+nuevos se guardan en `models/nl2cd_qwen7b`; el ZIP conserva los pesos anteriores si se
 necesitan recuperar.
 
 Hay que distinguir la carpeta raíz de los checkpoints de entrenamiento:
 
-- `nl2cd_qwen7b/adapter_model.safetensors` es el adaptador seleccionado para
+- `models/nl2cd_qwen7b/adapter_model.safetensors` es el adaptador seleccionado para
   inferencia. Como `load_best_model_at_end=True`, `Trainer` restaura primero el
   checkpoint con menor `eval_loss` y `trainer.save_model()` copia ese adaptador
   seleccionado a la raíz.
-- `nl2cd_qwen7b/checkpoint-N/` contiene además el estado necesario para
+- `models/nl2cd_qwen7b/checkpoint-N/` contiene además el estado necesario para
   reanudar una corrida desde ese paso, como el optimizador, scheduler y estado
   de `Trainer`.
 - El checkpoint de mayor número representa el último paso ejecutado, pero no
   necesariamente el mejor modelo.
 
-Por tanto, `inference.py` y `server.py` deben seguir cargando la raíz
-`nl2cd_qwen7b`. Una ruta `checkpoint-N` solo debe indicarse explícitamente para
+Por tanto, `qwen_gpsr/runtime/inference.py` y `server.py` deben seguir cargando la raíz
+`models/nl2cd_qwen7b`. Una ruta `checkpoint-N` solo debe indicarse explícitamente para
 reanudar o comparar un checkpoint concreto.
 
 ### Inicio del entrenamiento
@@ -613,7 +807,7 @@ reanudar o comparar un checkpoint concreto.
 Después de completar el checklist:
 
 ```bash
-python Nl-Cl.py
+python3 -m qwen_gpsr.training.train
 ```
 
 El script:
@@ -627,7 +821,7 @@ El script:
    guarda ese adaptador junto con el tokenizer;
 7. ejecuta exact match y las métricas semánticas nuevas.
 
-### Qué aprende realmente `Nl-Cl.py`
+### Qué aprende realmente `qwen_gpsr/training/train.py`
 
 Cada fila se convierte a una conversación usando el chat template oficial del
 tokenizer de Qwen:
@@ -685,8 +879,10 @@ en el entrenamiento vigente se conservaron el mejor checkpoint y el último.
 Después de `trainer.train()`, el modelo en memoria ya contiene los pesos del
 mejor checkpoint. `trainer.save_model()` guarda ese adaptador LoRA elegido en
 la raíz y no duplica todos los pesos del Qwen base. El tokenizer también se
-guarda en `nl2cd_qwen7b` para que entrenamiento, inferencia y servidor usen el
+guarda en `models/nl2cd_qwen7b` para que entrenamiento, inferencia y servidor usen el
 mismo vocabulario y chat template.
+
+<a id="seccion-13"></a>
 
 ## 13. Pruebas automatizadas
 
@@ -694,7 +890,7 @@ Las pruebas del generador, el contrato y los artefactos gráficos se ejecutan
 con:
 
 ```bash
-python -m unittest -v test_dataset_quality.py test_evaluate_model.py
+python -m unittest -v tests/test_dataset_quality.py tests/test_evaluate_model.py
 ```
 
 Cubren:
@@ -710,6 +906,8 @@ Cubren:
 - clasificación de `takeObjInRoom`;
 - advertencias de catálogo;
 - una secuencia representativa de cada familia en CLIPS.
+
+<a id="seccion-14"></a>
 
 ## 14. Inferencia remota con `server.py`
 
@@ -744,7 +942,7 @@ export QWEN_API_KEY='clave'
 python server.py \
   --host 0.0.0.0 \
   --port 8008 \
-  --adapter-path nl2cd_qwen7b \
+  --adapter-path models/nl2cd_qwen7b \
   --api-key "$QWEN_API_KEY"
 ```
 
@@ -756,7 +954,7 @@ Comprobar el servidor desde la red antes de iniciar ROS:
 
 ```bash
 curl http://IP_DE_LA_GPU:8008/health
-python test_server.py \
+python3 -m qwen_gpsr.tools.check_server \
   "go to the kitchen and find Robin" \
   --url http://IP_DE_LA_GPU:8008 \
   --api-key "$QWEN_API_KEY"
@@ -867,7 +1065,7 @@ export QWEN_TAILSCALE_IP="$(tailscale ip -4)"
 python3 server.py \
   --host "$QWEN_TAILSCALE_IP" \
   --port 8008 \
-  --adapter-path nl2cd_qwen7b \
+  --adapter-path models/nl2cd_qwen7b \
   --api-key "$QWEN_API_KEY"
 ```
 
@@ -955,11 +1153,11 @@ curl -X POST http://qwen-mexico:8008/translate \
   -d '{"command":"bring me the apple from the kitchen"}'
 ```
 
-Si `test_server.py` también está disponible en ese equipo, prueba `/health` y
+Si `qwen_gpsr/tools/check_server.py` también está disponible en ese equipo, prueba `/health` y
 `/translate` en una sola ejecución:
 
 ```bash
-python3 test_server.py \
+python3 -m qwen_gpsr.tools.check_server \
   "bring me the apple from the kitchen" \
   --url http://qwen-mexico:8008 \
   --api-key "$QWEN_API_KEY"
@@ -1030,9 +1228,11 @@ Como defensa adicional, las políticas de
 [control de acceso de Tailscale](https://tailscale.com/docs/features/access-control)
 pueden limitar qué usuario o equipo de Corea alcanza `qwen-mexico:8008`.
 
+<a id="seccion-15"></a>
+
 ## 15. Entrenamiento definitivo vigente de 40,000 muestras
 
-El adaptador vigente está en `nl2cd_qwen7b`. El experimento utilizó 36,000 muestras para entrenamiento, 4,000 para validación, batch efectivo 8 y dos épocas.
+El adaptador vigente está en `models/nl2cd_qwen7b`. El experimento utilizó 36,000 muestras para entrenamiento, 4,000 para validación, batch efectivo 8 y dos épocas.
 
 | Resultado de entrenamiento | Valor |
 |---|---:|
@@ -1046,22 +1246,22 @@ El adaptador vigente está en `nl2cd_qwen7b`. El experimento utilizó 36,000 mue
 La diferencia entre el mejor valor y el último es aproximadamente `0.000023`,
 por lo que la curva terminó esencialmente estable. En esta corrida
 `load_best_model_at_end=True` estuvo activo: el estado de `Trainer` identificó
-`nl2cd_qwen7b/checkpoint-5000` como el mejor y lo restauró antes de guardar y
+`models/nl2cd_qwen7b/checkpoint-5000` como el mejor y lo restauró antes de guardar y
 evaluar el adaptador.
 
 Al finalizar quedaron estos artefactos:
 
 | Ruta | Contenido y uso |
 |---|---|
-| `nl2cd_qwen7b/` | mejor adaptador y tokenizer; ruta oficial para inferencia |
-| `nl2cd_qwen7b/checkpoint-5000/` | mejor checkpoint completo; permite reanudar desde el paso 5,000 |
-| `nl2cd_qwen7b/checkpoint-9000/` | estado del último paso; no fue el seleccionado para inferencia |
+| `models/nl2cd_qwen7b/` | mejor adaptador y tokenizer; ruta oficial para inferencia |
+| `models/nl2cd_qwen7b/checkpoint-5000/` | mejor checkpoint completo; permite reanudar desde el paso 5,000 |
+| `models/nl2cd_qwen7b/checkpoint-9000/` | estado del último paso; no fue el seleccionado para inferencia |
 
-Se verificó que `nl2cd_qwen7b/adapter_model.safetensors` y el archivo homónimo
+Se verificó que `models/nl2cd_qwen7b/adapter_model.safetensors` y el archivo homónimo
 de `checkpoint-5000` tienen el mismo SHA-256. El adaptador de la raíz es, por
 tanto, exactamente el mejor modelo restaurado y no el del paso 9,000.
 
-![Curva de pérdida del entrenamiento de 40,000 muestras](curva_perdida_qwen.png)
+![Curva de pérdida del entrenamiento de 40,000 muestras](reports/figures/curva_perdida_qwen.png)
 
 La evaluación integrada posterior al entrenamiento utilizó 50 muestras del
 holdout y se ejecutó sobre el mejor modelo restaurado:
@@ -1076,10 +1276,21 @@ holdout y se ejecutó sobre el mejor modelo restaurado:
 | planificable en CLIPS | 50/50 (100%) |
 
 Esta muestra aleatoria cubrió 21 de las 29 familias. No sustituye al benchmark
-fijo de `model_evaluation_cases.jsonl`, que debe ejecutarse nuevamente antes de
+fijo de `data/benchmarks/model_evaluation_cases.jsonl`, que debe ejecutarse nuevamente antes de
 atribuir al adaptador vigente los resultados históricos de otro checkpoint.
 
 El archivo `adapter_model.safetensors` ocupa aproximadamente 323 MB. La carpeta
 completa puede ser mayor mientras conserve checkpoints intermedios; para
 inferencia solo son necesarios el adaptador final, su configuración y los
-archivos del tokenizer presentes en la raíz de `nl2cd_qwen7b`.
+archivos del tokenizer presentes en la raíz de `models/nl2cd_qwen7b`.
+
+## Documentación complementaria
+
+- [Programas experimentales GPT y Qwen–CLIPS](experiments/README.md).
+
+- [Guía del experimento](docs/experiment/Guia_del_experimento.md).
+- [Cuaderno de los 60 casos](docs/experiment/Cuaderno_desarrollo_60.md).
+- [Planificador GPT](chatgpt_planner/README.md).
+- [Catálogos y escenario GPSR](data/CompetitionTemplate/README.md).
+- [Catálogo de objetos](data/CompetitionTemplate/objects/README.md).
+- [Prototipos de referencia](legacy/README.md).

@@ -1,0 +1,14 @@
+{
+  "source_root": "src/Planning/clips/clips_node",
+  "adapter_source": "clips_node/goals_to_clips_node.py",
+  "classes": [
+    "ParsedGoal",
+    "GoalParser",
+    "ClipsGoalFactBuilder"
+  ],
+  "adapter_source_sha256": "9e7a6bf26e2df9d159a74eb2f2544ed3da29dbaae513f0204dff985b2067ec6c",
+  "adapter_sha256": "dbd54e06d8544b92246b2aa8833cc2242d82320ac74832c68db7b76b4f30021f",
+  "rules_source": "clips_rules/goals_planning.clp",
+  "rules_sha256": "578b9300453cb0a5dff54502dd4c425f9a1c9a9131e431183aaee38179963bf5",
+  "method": "Class source preserved verbatim; only imports and ROS transport removed."
+}

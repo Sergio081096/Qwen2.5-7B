@@ -13,7 +13,7 @@ from jsonschema import Draft202012Validator
 
 BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE.parent))
-from goal_schema import parse_goal, validate_goals
+from qwen_gpsr.domain.goal_schema import parse_goal, validate_goals
 
 
 def load_artifacts():

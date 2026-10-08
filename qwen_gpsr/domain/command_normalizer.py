@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from functools import lru_cache
 
-from command_constants import (
+from qwen_gpsr.domain.command_constants import (
     COLOR_CLOTHE_LIST,
     COLOR_CLOTHES_LIST,
     GESTURE_PERSON_LIST,
@@ -14,10 +14,12 @@ from command_constants import (
     POSE_PERSON_PLURAL_LIST,
     TALK_LIST,
 )
-from knowledge import Knowledge, parse_data
+from qwen_gpsr.domain.knowledge import Knowledge, parse_data
 
 
-DATA_DIR = "./CompetitionTemplate"
+from qwen_gpsr.paths import CATALOG_DIR
+
+DATA_DIR = str(CATALOG_DIR)
 
 FILLER_WORDS = {
     "ah",

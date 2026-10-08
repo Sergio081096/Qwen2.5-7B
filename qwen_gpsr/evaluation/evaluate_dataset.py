@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
+from qwen_gpsr.paths import DATASET_PATH
+
 import argparse
 import json
 
-from dataset_evaluation import (
+from qwen_gpsr.evaluation.dataset_evaluation import (
     DEFAULT_CLIPS_RULES,
     ClipsPlanValidator,
     evaluate_dataset_rows,
@@ -25,7 +27,7 @@ def iter_jsonl(path, max_samples=0):
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("path", nargs="?", default="dataset_gpsr.jsonl")
+    parser.add_argument("path", nargs="?", default=str(DATASET_PATH))
     parser.add_argument("--max-samples", type=int, default=0)
     parser.add_argument("--clips-samples", type=int, default=200)
     parser.add_argument("--clips-rules", default=str(DEFAULT_CLIPS_RULES))

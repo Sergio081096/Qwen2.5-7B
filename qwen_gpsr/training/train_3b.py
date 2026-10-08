@@ -1,4 +1,4 @@
-"""Ajuste QLoRA de Qwen2.5-7B para traducir comandos GPSR a goals.
+"""Ajuste QLoRA de Qwen2.5-3B para traducir comandos GPSR a goals.
 
 El entrenamiento es *completion-only*: el comando forma el turno ``user`` y
 el modelo aprende únicamente el JSON del turno ``assistant``. Los tokens del
@@ -6,11 +6,14 @@ prompt se mantienen como contexto, pero reciben label ``-100`` y no participan
 en la pérdida.
 
 Flujo: validar JSONL -> split -> chat template -> Qwen 4-bit + LoRA -> Trainer
--> mejor checkpoint -> métricas semánticas/CLIPS -> ``loss_curve.png``.
+-> mejor checkpoint -> métricas semánticas/CLIPS -> ``loss_curve3b.png``.
 """
 
 import json
 import os
+from pathlib import Path
+
+from qwen_gpsr.paths import REPO_ROOT, DATASET_PATH, REPORTS_DIR
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
 
@@ -27,25 +30,26 @@ from transformers import (
     TrainingArguments,
 )
 
-from graficar_perdidas import graficar_perdidas
+from qwen_gpsr.training.graficar_perdidas import graficar_perdidas
 
-from dataset_evaluation import (
+from qwen_gpsr.evaluation.dataset_evaluation import (
     DEFAULT_CLIPS_RULES,
     ClipsPlanValidator,
     evaluate_predictions,
     print_evaluation_report,
 )
-from goal_schema import validate_goals as validate_goal_schema
+from qwen_gpsr.domain.goal_schema import validate_goals as validate_goal_schema
 
+MODEL_DIR = REPO_ROOT / "models" / "nl2cd_qwen3b"
 
 # =====================================================
 # 1. CONFIGURACION: valores que normalmente cambian entre experimentos
 # =====================================================
-MODEL_NAME = "Qwen/Qwen2.5-7B"
-DATA_PATH = "dataset_gpsr.jsonl"
+MODEL_NAME = "Qwen/Qwen2.5-3B"
+DATA_PATH = str(DATASET_PATH)
 # DATA_PATH = "dataset_gpsr_augmented.jsonl"
-OUTPUT_DIR = "nl2cd_qwen7b"
-LOSS_CURVE_PATH = "loss_curve.png"
+OUTPUT_DIR = str(MODEL_DIR)
+LOSS_CURVE_PATH = str(REPORTS_DIR / "figures" / "loss_curve3b.png")
 
 # Longitud combinada máxima de comando y respuesta. Reducirla puede truncar los
 # goals finales de órdenes compuestas.
@@ -289,7 +293,7 @@ def apply_lora(model):
         lora_alpha=64,
         lora_dropout=0.05,
         # Ajustar atención + MLP aumenta capacidad respecto a usar solo
-        # q_proj/v_proj, con un adaptador final cercano a 309 MB.
+        # q_proj/v_proj; el tamaño del adaptador depende del modelo base.
         target_modules=[
             "q_proj",
             "k_proj",
@@ -468,16 +472,16 @@ def main():
         remove_columns=raw_eval_dataset.column_names,
     )
 
-    print("Cargando modelo Qwen2.5-7B en 4-bit...")
+    print("Cargando modelo Qwen2.5-3B en 4-bit...")
     model = load_model(compute_dtype)
     model = apply_lora(model)
 
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
-        # Batch efectivo = 1 muestra * 8 acumulaciones = 8. Cambiar cualquiera
-        # de ambos valores modifica memoria, pasos totales y dinámica del LR.
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=8,
+        # Batch efectivo en una GPU = 4 muestras * 2 acumulaciones = 8.
+        # Se mantiene el batch efectivo original con más muestras por lote.
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=2,
         num_train_epochs=2,
         learning_rate=1e-4,
         fp16=compute_dtype == torch.float16,
@@ -509,11 +513,11 @@ def main():
         data_collator=CompletionOnlyCollator(tokenizer),
     )
 
-    print("Entrenando modelo Qwen2.5-7B...")
+    print("Entrenando modelo Qwen2.5-3B...")
     trainer.train()
 
     # save_model escribe los pesos LoRA seleccionados, no otra copia completa
-    # de Qwen2.5-7B. El modelo base se vuelve a obtener de MODEL_NAME.
+    # de Qwen2.5-3B. El modelo base se vuelve a obtener de MODEL_NAME.
     print("Guardando adaptador LoRA y tokenizer...")
     trainer.save_model(OUTPUT_DIR)
     tokenizer.save_pretrained(OUTPUT_DIR)

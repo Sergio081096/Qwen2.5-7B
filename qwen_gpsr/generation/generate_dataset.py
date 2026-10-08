@@ -15,33 +15,36 @@ La escritura se hace al final para que un error de catálogo, esquema o CLIPS no
 deje un dataset parcial que parezca apto para entrenamiento.
 """
 
+from pathlib import Path
+from qwen_gpsr.paths import CATALOG_DIR, DATASET_PATH, DATA_DIR as PROJECT_DATA_DIR
+
 import json
 import random
 from collections import Counter
 
-from catalog_validation import (
+from qwen_gpsr.domain.catalog_validation import (
     DEFAULT_JUSTINA_NAMES,
     print_catalog_report,
     validate_catalogs,
 )
-from dataset_evaluation import (
+from qwen_gpsr.evaluation.dataset_evaluation import (
     DEFAULT_CLIPS_RULES,
     ClipsPlanValidator,
     evaluate_dataset_rows,
     print_evaluation_report,
 )
-from goal_schema import entity_kinds, goal_signature, slot_names, validate_goals
-from gpsr_commands import CommandGenerator
-from knowledge import parse_data
+from qwen_gpsr.domain.goal_schema import entity_kinds, goal_signature, slot_names, validate_goals
+from qwen_gpsr.generation.gpsr_commands import CommandGenerator
+from qwen_gpsr.domain.knowledge import parse_data
 
 # ================= CONFIGURACIÓN MANUAL =================
 # Estas opciones son deliberadamente constantes: permiten registrar en Git la
 # configuración exacta con la que se creó cada versión del dataset.
-DATA_DIR = "./CompetitionTemplate"       # Directorio con los datos del mundo
+DATA_DIR = str(CATALOG_DIR)       # Directorio con los datos del mundo
 NUM_SAMPLES = 40000                      # Número total de comandos a generar
 PERSON_RATIO = 0.5                       # Proporción de comandos de personas
 RANDOM_SEED = 42                         # Semilla para reproducibilidad
-OUTPUT_FILE = "dataset_gpsr.jsonl"       # Archivo de salida
+OUTPUT_FILE = str(DATASET_PATH)       # Archivo de salida
 DEDUPLICATE = True                       # Evita fuga de inputs exactos entre splits
 MAX_ATTEMPTS_PER_SAMPLE = 50             # Límite antes de considerar saturación
 CLIPS_VALIDATION_SAMPLES = 200           # 0 valida todas las muestras
@@ -53,7 +56,7 @@ CLIPS_RULES_FILE = DEFAULT_CLIPS_RULES
 # ---------------------------------------------------------------------------
 # MODO DE INSPECCIÓN: enumeración determinista de superficies/follow-ups
 # ---------------------------------------------------------------------------
-def enumerate_and_save(knowledge=None, output_file="command_variants.jsonl"):
+def enumerate_and_save(knowledge=None, output_file=PROJECT_DATA_DIR / "datasets" / "command_variants.jsonl"):
     """Exporta superficies y follow-ups para inspección manual.
 
     Este modo no intenta respetar ``NUM_SAMPLES`` ni las cuotas de categorías;
@@ -84,6 +87,7 @@ def enumerate_and_save(knowledge=None, output_file="command_variants.jsonl"):
             except Exception as e:
                 print(f"Error con {cmd_key}/{cat}: {e}")
 
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:
         for item in all_variants:
             f.write(json.dumps(item, ensure_ascii=False) + "\n")
@@ -415,7 +419,7 @@ def generate_balanced_dataset(
     print(f"Rechazos controlados: {dict(rejection_stats)}")
 
     # El orden de llenado estaba agrupado por estratos. Barajar evita bloques de
-    # una misma familia antes de crear el split train/eval en Nl-Cl.py.
+    # una misma familia antes de crear el split train/eval en qwen_gpsr.training.train.
     random.shuffle(dataset)
     return dataset
 
@@ -497,6 +501,7 @@ def main():
         raise ValueError("Hay secuencias que CLIPS no puede planificar")
 
     # FASE D: persistencia. Es la primera operación que reemplaza OUTPUT_FILE.
+    Path(OUTPUT_FILE).parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         for sample in dataset:
             f.write(json.dumps(sample, ensure_ascii=False) + "\n")
@@ -522,6 +527,6 @@ if __name__ == "__main__":
     ENUMERATE_MODE = False   # False para generar dataset aleatorio
 
     if ENUMERATE_MODE:
-        enumerate_and_save(output_file="all_command_variants.jsonl")
+        enumerate_and_save(output_file=PROJECT_DATA_DIR / "datasets" / "all_command_variants.jsonl")
     else:
         main()

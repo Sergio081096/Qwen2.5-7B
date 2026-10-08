@@ -9,9 +9,9 @@ combinaciones redundantes y valida el plan antes de devolver una muestra.
 import random
 import warnings
 
-from goal_schema import validate_goals
+from qwen_gpsr.domain.goal_schema import validate_goals
 
-from command_constants import (
+from qwen_gpsr.domain.command_constants import (
     CLOTHE_LIST,
     CLOTHES_LIST,
     COLOR_CLOTHE_LIST,
@@ -37,8 +37,8 @@ from command_constants import (
     VERB_DICT,
     validate_template_variants,
 )
-from command_goals import CommandGoalsMixin
-from command_utils import CommandUtilsMixin
+from qwen_gpsr.generation.command_goals import CommandGoalsMixin
+from qwen_gpsr.generation.command_utils import CommandUtilsMixin
 
 
 class CommandGenerator(CommandUtilsMixin, CommandGoalsMixin):

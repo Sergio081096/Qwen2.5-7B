@@ -1,0 +1,118 @@
+{
+  "desarrollo_sha256": "02103490f89367add79ae9b6aea90e01ecd7f9def7cb32c24d9fb51e6b0b5c7b",
+  "dataset_sha256": "0695f400370b93abbe97fc403a2acaa9f2d6bc8241667788bd466c6ad7c1c406",
+  "casos_desarrollo": 60,
+  "filas_dataset": 40000,
+  "normalizador_real": "command_normalizer:normalize_command",
+  "estado_normalizador_real": "comprobado",
+  "coincidencias": {
+    "literal": [],
+    "limpieza_basica": [
+      {
+        "id": "DEV-031",
+        "linea_dataset": 3455
+      },
+      {
+        "id": "DEV-004",
+        "linea_dataset": 4879
+      },
+      {
+        "id": "DEV-010",
+        "linea_dataset": 10047
+      },
+      {
+        "id": "DEV-001",
+        "linea_dataset": 10731
+      },
+      {
+        "id": "DEV-040",
+        "linea_dataset": 23160
+      },
+      {
+        "id": "DEV-025",
+        "linea_dataset": 37681
+      }
+    ],
+    "normalizador_real": [
+      {
+        "id": "DEV-031",
+        "linea_dataset": 3455
+      },
+      {
+        "id": "DEV-033",
+        "linea_dataset": 3455
+      },
+      {
+        "id": "DEV-004",
+        "linea_dataset": 4879
+      },
+      {
+        "id": "DEV-006",
+        "linea_dataset": 4879
+      },
+      {
+        "id": "DEV-010",
+        "linea_dataset": 10047
+      },
+      {
+        "id": "DEV-012",
+        "linea_dataset": 10047
+      },
+      {
+        "id": "DEV-001",
+        "linea_dataset": 10731
+      },
+      {
+        "id": "DEV-003",
+        "linea_dataset": 10731
+      },
+      {
+        "id": "DEV-001",
+        "linea_dataset": 11912
+      },
+      {
+        "id": "DEV-003",
+        "linea_dataset": 11912
+      },
+      {
+        "id": "DEV-001",
+        "linea_dataset": 22687
+      },
+      {
+        "id": "DEV-003",
+        "linea_dataset": 22687
+      },
+      {
+        "id": "DEV-040",
+        "linea_dataset": 23160
+      },
+      {
+        "id": "DEV-042",
+        "linea_dataset": 23160
+      },
+      {
+        "id": "DEV-025",
+        "linea_dataset": 37681
+      },
+      {
+        "id": "DEV-027",
+        "linea_dataset": 37681
+      }
+    ]
+  },
+  "ids_con_coincidencia": [
+    "DEV-001",
+    "DEV-003",
+    "DEV-004",
+    "DEV-006",
+    "DEV-010",
+    "DEV-012",
+    "DEV-025",
+    "DEV-027",
+    "DEV-031",
+    "DEV-033",
+    "DEV-040",
+    "DEV-042"
+  ],
+  "alcance": "Igualdad literal y de transformaciones indicadas; no certifica independencia semántica ni novedad de plantilla."
+}

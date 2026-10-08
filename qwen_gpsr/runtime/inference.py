@@ -5,9 +5,11 @@ import resource
 import time
 from typing import Any
 
+from qwen_gpsr.paths import MODEL_DIR
+
 import torch
-from command_normalizer import get_default_normalizer
-from goal_schema import validate_goals as validate_goal_schema
+from qwen_gpsr.domain.command_normalizer import get_default_normalizer
+from qwen_gpsr.domain.goal_schema import validate_goals as validate_goal_schema
 from peft import PeftModel
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
@@ -16,8 +18,8 @@ from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAn
 # CONFIGURACION
 # =====================================================
 BASE_MODEL_NAME = "Qwen/Qwen2.5-7B"
-# Debe apuntar al mismo OUTPUT_DIR con el que terminó Nl-Cl.py.
-ADAPTER_PATH = "nl2cd_qwen7b"
+# Debe apuntar al mismo OUTPUT_DIR usado en qwen_gpsr.training.train.
+ADAPTER_PATH = str(MODEL_DIR)
 MAX_NEW_TOKENS = 128
 INVALID_MARKERS = ("WARNING", "None", "{", "}")
 AUTO_DEVICE_MAPS = {"auto", "balanced", "balanced_low_0", "sequential"}
@@ -179,8 +181,8 @@ def load_tokenizer(adapter_path=ADAPTER_PATH):
     return tokenizer
 
 
-def load_model_config():
-    config = AutoConfig.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True)
+def load_model_config(base_model_name=BASE_MODEL_NAME):
+    config = AutoConfig.from_pretrained(base_model_name, trust_remote_code=True)
     config.use_sliding_window = False
     config.sliding_window = None
     config.max_window_layers = 0
@@ -267,6 +269,9 @@ def load_model(
     cpu_offload=False,
     adapter_path=ADAPTER_PATH,
 ):
+    # The adapter identifies its own base model; 3B must never be loaded on 7B.
+    with open(os.path.join(adapter_path, 'adapter_config.json'), encoding='utf-8') as f:
+        base_model_name = json.load(f)['base_model_name_or_path']
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_use_double_quant=True,
@@ -275,7 +280,7 @@ def load_model(
         llm_int8_enable_fp32_cpu_offload=cpu_offload,
     )
     from_pretrained_kwargs: dict[str, Any] = {
-        "config": load_model_config(),
+        "config": load_model_config(base_model_name),
         "quantization_config": bnb_config,
         "device_map": normalize_device_map(device_map),
         "torch_dtype": compute_dtype,
@@ -287,7 +292,7 @@ def load_model(
         from_pretrained_kwargs["max_memory"] = parsed_max_memory
 
     base_model = AutoModelForCausalLM.from_pretrained(
-        BASE_MODEL_NAME,
+        base_model_name,
         **from_pretrained_kwargs,
     )
     model = PeftModel.from_pretrained(base_model, adapter_path)

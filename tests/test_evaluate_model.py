@@ -2,8 +2,8 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from command_constants import TEMPLATE_VARIANTS
-from evaluate_model import (
+from qwen_gpsr.domain.command_constants import TEMPLATE_VARIANTS
+from qwen_gpsr.evaluation.evaluate_model import (
     DEFAULT_BENCHMARK,
     case_details,
     create_evaluation_artifacts,
@@ -61,7 +61,7 @@ class ModelBenchmarkTests(unittest.TestCase):
         self.assertFalse(details[0]["exact"])
         self.assertEqual(details[0]["predicted"], repeated["goals"])
 
-    def test_default_benchmark_is_next_to_script(self):
+    def test_default_benchmark_exists(self):
         self.assertTrue(Path(DEFAULT_BENCHMARK).is_file())
 
     def test_evaluation_artifacts_are_created_from_cached_results(self):

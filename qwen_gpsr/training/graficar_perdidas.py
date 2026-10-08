@@ -1,4 +1,6 @@
 """Curvas de pérdida desde un estado de Trainer o un archivo trainer_state.json."""
+from qwen_gpsr.paths import REPORTS_DIR
+
 import argparse
 import json
 from pathlib import Path
@@ -9,7 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
 
-def graficar_perdidas(estado, salida="curva_perdida_qwen", desde=1000):
+def graficar_perdidas(estado, salida=REPORTS_DIR / "figures" / "curva_perdida_qwen", desde=1000):
     """Recibe un dict con log_history y best_model_checkpoint; devuelve PNG y PDF.
 
     salida es una ruta base sin extensión. No carga ni entrena el modelo.
@@ -76,7 +78,7 @@ def graficar_perdidas(estado, salida="curva_perdida_qwen", desde=1000):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("estado", type=Path, help="trainer_state.json del último checkpoint")
-    parser.add_argument("--salida", type=Path, default=Path("curva_perdida_qwen"),
+    parser.add_argument("--salida", type=Path, default=REPORTS_DIR / "figures" / "curva_perdida_qwen",
                         help="Ruta base de salida, sin extensión")
     parser.add_argument("--desde", type=int, default=1000, help="Inicio del detalle ampliado")
     args = parser.parse_args()

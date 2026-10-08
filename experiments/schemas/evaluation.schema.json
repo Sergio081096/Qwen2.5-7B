@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "example_only": {
+      "const": false
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "reference_version": {
+      "type": "string"
+    },
+    "evaluator_version": {
+      "type": "string"
+    },
+    "evaluation_status": {
+      "enum": [
+        "pending",
+        "completed"
+      ]
+    },
+    "task_fulfillment": {
+      "enum": [
+        "pending",
+        "pass",
+        "fail",
+        "not_verifiable",
+        "not_applicable"
+      ]
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "reviewer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviewed_at_utc": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "result_sha256": {
+      "type": "string"
+    },
+    "review_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "goals_exact_match": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "semantic_correct": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "plan_contract_valid": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "domain_response_correct": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "failed_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "error_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "example_only",
+    "run_id",
+    "reference_version",
+    "evaluator_version",
+    "evaluation_status",
+    "task_fulfillment",
+    "review_notes",
+    "reviewer",
+    "reviewed_at_utc",
+    "result_sha256",
+    "review_sha256",
+    "goals_exact_match",
+    "semantic_correct",
+    "plan_contract_valid",
+    "domain_response_correct",
+    "failed_checks",
+    "error_categories"
+  ],
+  "additionalProperties": false
+}

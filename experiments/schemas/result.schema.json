@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "example_only",
+    "campaign_id",
+    "run_id",
+    "case_id",
+    "intent_id",
+    "architecture",
+    "config_id",
+    "repetition",
+    "attempt",
+    "started_at_utc",
+    "finished_at_utc",
+    "input_original",
+    "execution_status",
+    "response_kind",
+    "goals_pred",
+    "plan",
+    "message",
+    "raw_output",
+    "raw_output_kind",
+    "timing",
+    "validation",
+    "error",
+    "qwen_clips",
+    "gpt",
+    "reference_clips",
+    "resources",
+    "condition_label"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "example_only": {
+      "const": false
+    },
+    "campaign_id": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "intent_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "architecture": {
+      "enum": [
+        "qwen_clips",
+        "gpt_direct",
+        "reference_clips"
+      ]
+    },
+    "config_id": {
+      "type": "string"
+    },
+    "repetition": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "started_at_utc": {
+      "type": "string"
+    },
+    "finished_at_utc": {
+      "type": "string"
+    },
+    "input_original": {
+      "type": "string"
+    },
+    "execution_status": {
+      "enum": [
+        "completed",
+        "error",
+        "timeout"
+      ]
+    },
+    "response_kind": {
+      "enum": [
+        "plan",
+        "clarification",
+        "rejected",
+        null
+      ]
+    },
+    "goals_pred": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "plan": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object"
+      }
+    },
+    "message": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "raw_output": {
+      "type": [
+        "string",
+        "object",
+        "null"
+      ]
+    },
+    "raw_output_kind": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "total_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "model_request_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "adaptation_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "planning_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "extraction_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "validation_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "total_ms",
+        "model_request_ms",
+        "adaptation_ms",
+        "planning_ms",
+        "extraction_ms",
+        "validation_ms"
+      ],
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "response_schema_valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "goals_schema_valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "plan_contract_valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "response_schema_valid",
+        "goals_schema_valid",
+        "plan_contract_valid",
+        "issues"
+      ],
+      "additionalProperties": false
+    },
+    "error": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "qwen_clips": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "gpt": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "reference_clips": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "condition_label": {
+      "type": "string"
+    },
+    "resources": {
+      "type": "object",
+      "required": [
+        "client",
+        "model_internal"
+      ],
+      "properties": {
+        "client": {
+          "type": "object"
+        },
+        "model_internal": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "architecture": {
+            "const": "gpt_direct"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "resources": {
+            "properties": {
+              "model_internal": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "const": "unavailable"
+                  },
+                  "display": {
+                    "const": "no disponibles"
+                  },
+                  "cpu_seconds": {
+                    "type": "null"
+                  },
+                  "rss_peak_sampled_bytes": {
+                    "type": "null"
+                  },
+                  "gpu": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "status",
+                  "display",
+                  "cpu_seconds",
+                  "rss_peak_sampled_bytes",
+                  "gpu"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

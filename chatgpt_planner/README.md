@@ -1,5 +1,9 @@
 # ChatGPT direct GPSR planner
 
+Para campañas con repeticiones, reanudación y evaluación posterior, utiliza
+[el programa experimental GPT directo](../experiments/README.md). Este directorio
+contiene el prompt, esquema y ejemplos que fijan su contrato.
+
 This directory defines the experimental baseline in which one OpenAI model performs both jobs currently split between Qwen and CLIPS:
 
 ```text
@@ -56,7 +60,7 @@ Structured Outputs constrains the shape, types, required fields, and action enum
 
 The prompt follows the behavior documented in both repository READMEs and in `docs/goals_planning_rules.md`, with manipulation enabled. Executable plans target the `ros-message` contract consumed by `PlanExtractor`.
 
-There is currently one material inconsistency to resolve before the thesis benchmark: `goal_schema.py`, `dataset_evaluation.py`, `command_goals.py`, and the documentation support `place(object, at=destination)`, but the runtime `ClipsGoalFactBuilder` in `goals_to_clips_node.py` does not include `at` when it builds the CLIPS destination. Consequently, a Qwen command such as “bring an apple from the bed to the cabinet” can lose `cabinet` in the live ROS path even though the offline validator accepts it. This prompt implements the documented/intended behavior and keeps the destination. Fix the runtime adapter or explicitly version that difference before comparing systems.
+There is currently one material inconsistency to resolve before the thesis benchmark: `qwen_gpsr/domain/goal_schema.py`, `qwen_gpsr/evaluation/dataset_evaluation.py`, `qwen_gpsr/generation/command_goals.py`, and the documentation support `place(object, at=destination)`, but the runtime `ClipsGoalFactBuilder` in `goals_to_clips_node.py` does not include `at` when it builds the CLIPS destination. Consequently, a Qwen command such as “bring an apple from the bed to the cabinet” can lose `cabinet` in the live ROS path even though the offline validator accepts it. This prompt implements the documented/intended behavior and keeps the destination. Fix the runtime adapter or explicitly version that difference before comparing systems.
 
 ## Experimental controls
 
@@ -87,14 +91,14 @@ PY
 ## Nodo de pruebas por consola
 
 `planner_test_node.py` es un nodo independiente de pruebas en Python. Se ejecuta desde cualquier
-carpeta, usando los artefactos junto al script y `goal_schema.py` del repositorio.
+carpeta, usando los artefactos junto al script y `qwen_gpsr/domain/goal_schema.py` del repositorio.
 
-Desde `/home/sergio/qwen`:
+Desde la raíz de `/home/sergio/Qwen2.5-7B`:
 
 ```bash
 python -m pip install -r chatgpt_planner/requirements.txt
 python chatgpt_planner/planner_test_node.py --validate-local
-python -m unittest chatgpt_planner.test_planner_test_node
+python3 -m unittest tests.test_planner_test_node
 ```
 
 La validación local no necesita clave ni SDK de OpenAI; solo `jsonschema`.
@@ -126,7 +130,7 @@ la [documentación oficial de Structured Outputs](https://developers.openai.com/
   pasan el esquema y las comprobaciones locales adicionales.
 - El esquema por sí solo permite estados incoherentes, parámetros vacíos y pasos
   repetidos. El nodo añade comprobaciones de estado, marcadores, numeración,
-  anuncios, parámetro único, cierre y validación de goals mediante `goal_schema.py`.
+  anuncios, parámetro único, cierre y validación de goals mediante `qwen_gpsr/domain/goal_schema.py`.
 - No hay un comprobador completo de correspondencia comando/goals/acciones ni
   simulación de precondiciones físicas. `valid=true` significa únicamente que
   pasan las comprobaciones implementadas; no autoriza ejecución en el robot.

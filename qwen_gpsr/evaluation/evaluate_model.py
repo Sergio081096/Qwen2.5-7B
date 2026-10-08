@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from qwen_gpsr.paths import BENCHMARK_PATH, REPORTS_DIR
+
 import argparse
 import csv
 import json
@@ -19,15 +21,15 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from command_normalizer import get_default_normalizer
-from dataset_evaluation import (
+from qwen_gpsr.domain.command_normalizer import get_default_normalizer
+from qwen_gpsr.evaluation.dataset_evaluation import (
     DEFAULT_CLIPS_RULES,
     ClipsPlanValidator,
     evaluate_predictions,
     print_evaluation_report,
 )
-from goal_schema import semantic_slots, validate_goals
-from inference import (
+from qwen_gpsr.domain.goal_schema import semantic_slots, validate_goals
+from qwen_gpsr.runtime.inference import (
     ADAPTER_PATH,
     DEFAULT_DEVICE_MAP,
     ResourceTimer,
@@ -40,8 +42,8 @@ from inference import (
 )
 
 
-DEFAULT_BENCHMARK = Path(__file__).with_name("model_evaluation_cases.jsonl")
-DEFAULT_PLOTS_DIR = Path("evaluation_plots")
+DEFAULT_BENCHMARK = BENCHMARK_PATH
+DEFAULT_PLOTS_DIR = REPORTS_DIR / "evaluation" / "plots"
 
 
 def load_benchmark(path, max_samples=0, families=None):
@@ -528,6 +530,7 @@ def main():
 
     if args.output_json:
         payload = {"report": report, "cases": details}
+        Path(args.output_json).parent.mkdir(parents=True, exist_ok=True)
         with open(args.output_json, "w", encoding="utf-8") as stream:
             json.dump(payload, stream, ensure_ascii=False, indent=2)
         print(f"Reporte detallado guardado en {args.output_json}")

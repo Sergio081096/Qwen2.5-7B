@@ -1,15 +1,17 @@
+from qwen_gpsr.paths import CATALOG_DIR
+
 import contextlib
 import io
 import unittest
 from collections import Counter, defaultdict
 
-from catalog_validation import validate_local_catalog
-from command_constants import TEMPLATE_VARIANTS, validate_template_variants
-from dataset_evaluation import ClipsPlanValidator
-from generate_dataset import generate_balanced_dataset
-from goal_schema import parse_goal, validate_goals
-from gpsr_commands import CommandGenerator
-from knowledge import parse_data
+from qwen_gpsr.domain.catalog_validation import validate_local_catalog
+from qwen_gpsr.domain.command_constants import TEMPLATE_VARIANTS, validate_template_variants
+from qwen_gpsr.evaluation.dataset_evaluation import ClipsPlanValidator
+from qwen_gpsr.generation.generate_dataset import generate_balanced_dataset
+from qwen_gpsr.domain.goal_schema import parse_goal, validate_goals
+from qwen_gpsr.generation.gpsr_commands import CommandGenerator
+from qwen_gpsr.domain.knowledge import parse_data
 
 
 class GoalSchemaTests(unittest.TestCase):
@@ -49,7 +51,7 @@ class GoalSchemaTests(unittest.TestCase):
 class DatasetGenerationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.knowledge = parse_data("./CompetitionTemplate")
+        cls.knowledge = parse_data(str(CATALOG_DIR))
         generator = CommandGenerator(cls.knowledge, debug=False)
         with contextlib.redirect_stdout(io.StringIO()):
             cls.rows = generate_balanced_dataset(generator, 500, 0.5, seed=42)

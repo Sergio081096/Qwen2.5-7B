@@ -65,4 +65,10 @@ log/
 
 
 nl2cd_qwen7b/
+models/
+archives/
+/nl2cd_qwen7b
 *.zip
+
+# Campañas locales con respuestas originales y diarios
+/reports/experiments/

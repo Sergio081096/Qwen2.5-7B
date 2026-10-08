@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
-from goal_schema import (
+from qwen_gpsr.domain.goal_schema import (
     ParsedGoal,
     entity_kinds,
     goal_signature,

@@ -1,0 +1,74 @@
+{
+  "desarrollo_sha256": "4c1a356fa50ac317ad6b428c101a48183968a41e2771e2ad2bd7c622f61d4480",
+  "dataset_sha256": "0695f400370b93abbe97fc403a2acaa9f2d6bc8241667788bd466c6ad7c1c406",
+  "casos_desarrollo": 60,
+  "filas_dataset": 40000,
+  "normalizador_real": "command_normalizer:normalize_command",
+  "estado_normalizador_real": "comprobado",
+  "coincidencias": {
+    "literal": [],
+    "limpieza_basica": [
+      {
+        "id": "DEV-010",
+        "linea_dataset": 4671
+      },
+      {
+        "id": "DEV-031",
+        "linea_dataset": 6467
+      },
+      {
+        "id": "DEV-040",
+        "linea_dataset": 18455
+      },
+      {
+        "id": "DEV-025",
+        "linea_dataset": 35245
+      }
+    ],
+    "normalizador_real": [
+      {
+        "id": "DEV-010",
+        "linea_dataset": 4671
+      },
+      {
+        "id": "DEV-012",
+        "linea_dataset": 4671
+      },
+      {
+        "id": "DEV-031",
+        "linea_dataset": 6467
+      },
+      {
+        "id": "DEV-033",
+        "linea_dataset": 6467
+      },
+      {
+        "id": "DEV-040",
+        "linea_dataset": 18455
+      },
+      {
+        "id": "DEV-042",
+        "linea_dataset": 18455
+      },
+      {
+        "id": "DEV-025",
+        "linea_dataset": 35245
+      },
+      {
+        "id": "DEV-027",
+        "linea_dataset": 35245
+      }
+    ]
+  },
+  "ids_con_coincidencia": [
+    "DEV-010",
+    "DEV-012",
+    "DEV-025",
+    "DEV-027",
+    "DEV-031",
+    "DEV-033",
+    "DEV-040",
+    "DEV-042"
+  ],
+  "alcance": "Igualdad literal y de transformaciones indicadas; no certifica independencia semántica ni novedad de plantilla."
+}

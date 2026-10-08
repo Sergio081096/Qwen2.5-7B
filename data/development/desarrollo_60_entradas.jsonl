@@ -1,0 +1,60 @@
+{"id": "DEV-001", "input": "Go to the corridor, then go to the inspection point."}
+{"id": "DEV-002", "input": "Visit the corridor first and the inspection point afterwards."}
+{"id": "DEV-003", "input": "please go go to the corridor then go to the inspection point"}
+{"id": "DEV-004", "input": "Find a peach in the bathroom."}
+{"id": "DEV-005", "input": "Look for a peach inside the bathroom."}
+{"id": "DEV-006", "input": "please find a peach in the bathrom"}
+{"id": "DEV-007", "input": "Find a spoon at the bed and take it."}
+{"id": "DEV-008", "input": "Pick up the spoon you find at the bed."}
+{"id": "DEV-009", "input": "please find a spoon at the bed and and take it"}
+{"id": "DEV-010", "input": "Bring me a mug from the cabinet."}
+{"id": "DEV-011", "input": "Fetch a mug at the cabinet and deliver it to me."}
+{"id": "DEV-012", "input": "please bring me a mug from the cabnet"}
+{"id": "DEV-013", "input": "Bring a bowl from the bed to the storage rack."}
+{"id": "DEV-014", "input": "Collect a bowl at the bed and leave it at the storage rack."}
+{"id": "DEV-015", "input": "please bring a bowl from the bed to the storage  rack"}
+{"id": "DEV-016", "input": "In the kitchen, find a cup, take it, and put it on the table."}
+{"id": "DEV-017", "input": "Locate a cup in the kitchen and pick it up, then place it on the table there."}
+{"id": "DEV-018", "input": "in the kichen find a cup take it and put it on the table please"}
+{"id": "DEV-019", "input": "Find Robin in the office."}
+{"id": "DEV-020", "input": "Look for Robin inside the office."}
+{"id": "DEV-021", "input": "please find Robin in the ofice"}
+{"id": "DEV-022", "input": "Find Morgan in the kitchen and guide them to the entrance."}
+{"id": "DEV-023", "input": "Meet Morgan in the kitchen, then lead Morgan to the entrance."}
+{"id": "DEV-024", "input": "find Morgan in the kichen and guide them to the entrance please"}
+{"id": "DEV-025", "input": "Find the waving person in the bedroom and follow them."}
+{"id": "DEV-026", "input": "In the bedroom, locate the person who is waving and follow that person."}
+{"id": "DEV-027", "input": "please find the waving person in the bedrom and follow them"}
+{"id": "DEV-028", "input": "Take an orange from the refrigerator and give it to Sarah in the kitchen."}
+{"id": "DEV-029", "input": "Fetch an orange at the refrigerator, then find Sarah in the kitchen and hand the orange to her."}
+{"id": "DEV-030", "input": "take an orange from the refridgerator and give it to Sarah in the kichen"}
+{"id": "DEV-031", "input": "Count the toys on the storage rack."}
+{"id": "DEV-032", "input": "Tell me how many toys are on the storage rack."}
+{"id": "DEV-033", "input": "please count the the toys on the storage rack"}
+{"id": "DEV-034", "input": "Find Charlie in the living room and tell Charlie the current time."}
+{"id": "DEV-035", "input": "Locate Charlie in the living room and say what time it is to Charlie."}
+{"id": "DEV-036", "input": "please find Charlie in the living  room and tell Charlie the current time"}
+{"id": "DEV-037", "input": "Find a person in the bedroom, ask their name, and come back to tell me their name."}
+{"id": "DEV-038", "input": "Go to the bedroom, learn the name of a person there, then return and report it to me."}
+{"id": "DEV-039", "input": "please find a person in the bedroom ask their name and come back to tell me their name"}
+{"id": "DEV-040", "input": "Find the waving person in the corridor and answer their question."}
+{"id": "DEV-041", "input": "In the corridor, locate the person who is waving and respond to that person's question."}
+{"id": "DEV-042", "input": "find the waving person in the corridor and and answer their question please"}
+{"id": "DEV-043", "input": "Find Jane in the kitchen and greet her."}
+{"id": "DEV-044", "input": "Look for Jane in the kitchen and say hello to Jane."}
+{"id": "DEV-045", "input": "please find Jane in the kichen and greet her"}
+{"id": "DEV-046", "input": "Tell me which is the largest fruit on the sofa."}
+{"id": "DEV-047", "input": "Identify the biggest fruit on the sofa and report which one it is."}
+{"id": "DEV-048", "input": "please tell me which is the largest fruit on the sofa"}
+{"id": "DEV-049", "input": "Find the person waving and wearing a blue coat in the office, then guide them to the entrance."}
+{"id": "DEV-050", "input": "Count the people wearing red shirts in the living room."}
+{"id": "DEV-051", "input": "Tell me which is the heaviest fruit on the sofa."}
+{"id": "DEV-052", "input": "Find Simone at the coatrack and follow Simone to the bedroom."}
+{"id": "DEV-053", "input": "Bring me a mug from the refrigerator, then bring me a spoon from the bed."}
+{"id": "DEV-054", "input": "Find Water in the kitchen, take it, and bring it to me."}
+{"id": "DEV-055", "input": "Go to the kitchen and bring it to me."}
+{"id": "DEV-056", "input": "Find Robin in the office and guide Robin to the destination."}
+{"id": "DEV-057", "input": "Take a fork from the shelf and give it to her."}
+{"id": "DEV-058", "input": "Fly to the ceiling and inspect the lamp."}
+{"id": "DEV-059", "input": "Set the thermostat to twenty degrees."}
+{"id": "DEV-060", "input": "Pick up the apple on the shelf, but do not pick up the apple."}
